@@ -1,6 +1,7 @@
 pragma solidity ^0.6.0;
 
 import "https://github.com/smartcontractkit/chainlink/blob/develop/evm-contracts/src/v0.6/ChainlinkClient.sol";
+import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/access/Ownable.sol";
 
 library Strings {
     function concat(string memory _base, string memory _value) internal pure returns (string memory) {
@@ -24,7 +25,7 @@ library Strings {
     }
 }
 
-contract FundValueOracle is ChainlinkClient {
+contract FundValueOracle is ChainlinkClient, Ownable{
     using Strings for string;
 
     string public apiPath;
@@ -76,7 +77,17 @@ contract FundValueOracle is ChainlinkClient {
     {
       FundDataMap[_requestId].value = _result;
       FundDataMap[_requestId].requestTime = now;
-      // for test 
+      // for test
       requestIdArrays.push(_requestId);
+    }
+
+    // owne can update api endpoint
+    function updateApiPath(string memory _apiPath) external onlyOwner {
+      apiPath = _apiPath;
+    }
+
+    // owne can update fee
+    function updateFee(uint256 _fee) external onlyOwner {
+      fee = _fee;
     }
 }
