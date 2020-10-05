@@ -95,7 +95,9 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
   uint256 public totalTransactionsCount = 0;
 
   // for get correct last update for fund value
-  uint256 public fundValueCurTxsCount;
+  uint256 public fundValueCurTxsCount = 0;
+
+  bytes32 public latestOracleRequestID;
 
   // how many shares belong to each address
   mapping (address => uint256) public addressToShares;
@@ -164,11 +166,28 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
   }
 
   function updateFundValueFromOracle() public {
-
+    // require transfer from
+    // call Oracle
+    // update tx data
+    totalTransactionsCount += 0;
+    fundValueCurTxsCount = totalTransactionsCount;
   }
 
   function calculateFundValue() public view returns (uint256){
-    // TODO get value from Oracle
+    if(totalTransactionsCount == fundValueCurTxsCount){
+      // get result from latest Oracle request
+      (value, requestTime) = fundValueOracle.FundDataMap(latestOracleRequestID);
+      // require update fund value each 3 hours
+      if(now > requestTime + 3 hours){
+         return value;
+      }
+      else{
+        revert("ORACLE TIME UPDATE ISSUE");
+      }
+    }
+    else{
+      revert("ORACLE TX COUNT ISSUE");
+    }
   }
 
 

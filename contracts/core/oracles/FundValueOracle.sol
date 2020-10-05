@@ -77,8 +77,6 @@ contract FundValueOracle is ChainlinkClient, Ownable{
     {
       FundDataMap[_requestId].value = _result;
       FundDataMap[_requestId].requestTime = now;
-      // for test
-      requestIdArrays.push(_requestId);
     }
 
     // owne can update api endpoint
