@@ -74,7 +74,7 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
   // addresses to be able to invest in their fund
   mapping (address => bool) public whitelist;
 
-  uint public version = 7;
+  uint public version = 8;
 
   // the total number of shares in the fund
   uint256 public totalShares = 0;
@@ -157,8 +157,8 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
     emit SmartFundCreated(owner());
   }
 
-  function calculateFundValue() public virtual view returns (uint256){
-    // TODO get value from Oracle 
+  function calculateFundValue() public view returns (uint256){
+    // TODO get value from Oracle
   }
 
 
