@@ -91,6 +91,12 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
   // If true the contract will require each new asset to buy to be on a special Merkle tree list
   bool public isRequireTradeVerification;
 
+  // for tracking all core fund tx
+  uint256 public totalTransactionsCount = 0;
+
+  // for get correct last update for fund value
+  uint256 public fundValueCurTxsCount;
+
   // how many shares belong to each address
   mapping (address => uint256) public addressToShares;
 
@@ -155,6 +161,10 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
     isRequireTradeVerification = _isRequireTradeVerification;
 
     emit SmartFundCreated(owner());
+  }
+
+  function updateFundValueFromOracle() public {
+
   }
 
   function calculateFundValue() public view returns (uint256){
@@ -251,6 +261,9 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
     totalShares = totalShares.sub(numberOfWithdrawShares);
     addressToShares[msg.sender] = addressToShares[msg.sender].sub(numberOfWithdrawShares);
 
+    // update total tx
+    totalTransactionsCount += 1;
+
     emit Withdraw(msg.sender, numberOfWithdrawShares, totalShares);
   }
 
@@ -313,6 +326,9 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
 
     // add token to trader list
     _addToken(address(_destination));
+
+    // update total tx
+    totalTransactionsCount += 1;
 
     // emit event
     emit Trade(
@@ -465,6 +481,9 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
     // do withdraw
     _withdraw(cut, value, spenders);
 
+    // update total tx
+    totalTransactionsCount += 1;
+
     // add report
     fundManagerCashedOut = fundManagerCashedOut.add(fundManagerCut);
   }
@@ -538,6 +557,9 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
     } else {
       IERC20(_token).transfer(msg.sender, IERC20(_token).balanceOf(address(this)));
     }
+
+    // update total tx
+    totalTransactionsCount += 1;
   }
 
   /**

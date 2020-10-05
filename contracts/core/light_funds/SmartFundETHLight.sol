@@ -72,6 +72,9 @@ contract SmartFundETHLight is SmartFundLightCore {
 
     addressesNetDeposit[msg.sender] += int256(msg.value);
 
+    // update total tx
+    totalTransactionsCount += 1;
+
     emit Deposit(msg.sender, msg.value, shares, totalShares);
 
     return shares;
