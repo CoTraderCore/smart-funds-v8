@@ -137,36 +137,6 @@ contract SmartFundERC20Light is SmartFundLightCore {
 
 
   /**
-  * @dev get balance of input asset address in current core ERC20 ratio
-  *
-  * @param _token     token address
-  *
-  * @return balance in core ERC20
-  */
-  function getTokenValue(IERC20 _token) public override view returns (uint256) {
-    // get ETH in core ERC20
-    if (_token == ETH_TOKEN_ADDRESS){
-      return exchangePortal.getValue(
-        address(_token),
-        coreFundAsset,
-        address(this).balance);
-    }
-    // get current core ERC20
-    else if(_token == IERC20(coreFundAsset)){
-      return _token.balanceOf(address(this));
-    }
-    // get ERC20 in core ERC20
-    else{
-      uint256 tokenBalance = _token.balanceOf(address(this));
-      return exchangePortal.getValue(
-        address(_token),
-        coreFundAsset,
-        tokenBalance
-      );
-    }
-  }
-
-  /**
   * @dev sets new coreFundAsset NOTE: this works only for stable coins
   *
   * @param _coinAddress    New stable address

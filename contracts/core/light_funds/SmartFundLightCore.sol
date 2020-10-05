@@ -123,7 +123,7 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
 
     name = _name;
     successFee = _successFee;
-    platformFee = _successFee; // platform fee the same as manager fee 
+    platformFee = _successFee; // platform fee the same as manager fee
 
     // Init manager
     if(_owner == address(0)){
@@ -157,10 +157,9 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
     emit SmartFundCreated(owner());
   }
 
-  // virtual methods
-  // USD and ETH based funds have different implements of this methods
-  function calculateFundValue() public virtual view returns (uint256);
-  function getTokenValue(IERC20 _token) public virtual view returns (uint256);
+  function calculateFundValue() public virtual view returns (uint256){
+    // TODO get value from Oracle 
+  }
 
 
   /**
