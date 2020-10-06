@@ -30,17 +30,13 @@ contract FundValueOracle is ChainlinkClient, Ownable{
 
     string public apiPath;
     bytes32[] public requestIdArrays;
+    uint256 public fee;
+
     address private oracle;
     bytes32 private jobId;
-    uint256 private fee;
 
-    struct FundDataStruct {
-      uint256 value;
-      uint256 requestTime;
-    }
-
-    // Mapping of requestId => FundData
-    mapping (bytes32 => FundDataStruct) public FundDataMap;
+    // Mapping of requestId => FundValue
+    mapping (bytes32 => uint256) public getFundValueByID;
 
     /**
      * Network: Kovan
@@ -58,9 +54,11 @@ contract FundValueOracle is ChainlinkClient, Ownable{
     /**
      * Create a Chainlink request to retrieve API response, find the target
      */
-    function requestValue(string memory _fundAddress) public returns (bytes32 requestId)
+    function requestValue(address _fundAddress) public returns (bytes32 requestId)
     {
         Chainlink.Request memory request = buildChainlinkRequest(jobId, address(this), this.fulfill.selector);
+
+        // TODO CONVERT ADDRESS TO STRING AND CONCAT API ENDPOIN WITH ADDRESS
 
         // Set the URL to perform the GET request on
         request.add("get", "https://reqres.in/api/products/3");
@@ -75,8 +73,7 @@ contract FundValueOracle is ChainlinkClient, Ownable{
      */
     function fulfill(bytes32 _requestId, uint256 _result) public recordChainlinkFulfillment(_requestId)
     {
-      FundDataMap[_requestId].value = _result;
-      FundDataMap[_requestId].requestTime = now;
+      getFundValueByID[_requestId] = _result;
     }
 
     // owne can update api endpoint

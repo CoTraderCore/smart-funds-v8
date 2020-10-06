@@ -97,6 +97,8 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
   uint256 public latestOracleCallOnBlock;
   uint256 public latestOracleCaller;
 
+  address public linkTokenAddress;
+
   // how many shares belong to each address
   mapping (address => uint256) public addressToShares;
 
@@ -112,6 +114,7 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
   event Withdraw(address indexed user, uint256 sharesRemoved, uint256 totalShares);
   event Trade(address src, uint256 srcAmount, address dest, uint256 destReceived);
   event SmartFundCreated(address indexed owner);
+  event OracleUpdate(address caller, uint256 triggerTime, bytes32 id);
 
   modifier oracleFreeze {
     require(
@@ -130,6 +133,7 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
     address _exchangePortalAddress,
     address _permittedAddresses,
     address _coreFundAsset,
+    address _linkTokenAddress,
     bool    _isRequireTradeVerification
   )public{
     // never allow a 100% fee
@@ -165,33 +169,56 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
     // Initial core assets
     coreFundAsset = _coreFundAsset;
 
+    // Initial link token address
+    linkTokenAddress = _linkTokenAddress;
+
     // Initial check if fund require trade verification or not
     isRequireTradeVerification = _isRequireTradeVerification;
 
     emit SmartFundCreated(owner());
   }
 
+  // allow update oracle price
   function updateFundValueFromOracle() public {
+    // allow call Oracle only after 10 block after latest call
     require(block.number + 10 >= latestOracleCallOnBlock, "NEED WAIT 10 BLOCKS");
-    // require transfer from
-    // call Oracle
-    // update tx data
-    // latestOracleCallOnTime = now
-    // latestOracleCallOnBlock = block.number
-    // latestOracleRequestID
-    // latestOracleCaller = msg.sender
+    // transfer link commision from sender
+    require(
+      IERC20(linkTokenAddress).transferFrom(
+        msg.sender,
+        address(fundValueOracle),
+        fundValueOracle.fee()
+       ),
+       "CANT TRANSFER FROM LINK"
+    );
+    // call oracle
+    latestOracleRequestID = fundValueOracle.requestValue(address(this));
+
+    // update data
+    latestOracleCallOnTime = now;
+    latestOracleCallOnBlock = block.number;
+    latestOracleCaller = msg.sender;
+
+    // emit events
+    emit OracleUpdate(latestOracleCaller, latestOracleCallOnTime, latestOracleRequestID);
   }
 
-  function calculateFundValue() internal view returns (uint256){
-      require(msg.sender == latestOracleCaller, "NO ACCESES TO ORACLE UPDATE");
+
+  // core function for calculate deposit and withdraw and managerWithdraw
+  // return data from Oracle
+  function calculateFundValue() internal view returns (uint256) {
+      require(msg.sender == latestOracleCaller, "SENDER SHOULD BE LATEST ORACLE CALLER");
       // get result from latest Oracle request
-      (value) = fundValueOracle.FundDataMap(latestOracleRequestID);
-      // require update fund value each 3 hours
+      (value) = fundValueOracle.getFundValueByID(latestOracleRequestID);
+      // caller can update only in 3 minutes
       if(now > latestOracleCallOnTime + 3 minutes){
-         return value;
+        // reset latest Oracle Caller for protect from double call
+        latestOracleCaller = address(0);
+        // return data
+        return value;
       }
       else{
-        revert("ORACLE REQUIRE UPDATE");
+        revert("ORACLE TIME EXPIRED");
       }
   }
 
