@@ -89,9 +89,6 @@ contract SmartFundERC20Light is SmartFundLightCore {
 
     addressesNetDeposit[msg.sender] += int256(depositAmount);
 
-    // update total tx
-    totalTransactionsCount += 1;
-
     emit Deposit(msg.sender, depositAmount, shares, totalShares);
 
     return shares;
