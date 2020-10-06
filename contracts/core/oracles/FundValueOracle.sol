@@ -47,11 +47,11 @@ contract FundValueOracle is ChainlinkClient, Ownable{
      * Job ID: Chainlink - 29fa9aa13bf1468788b7cc4a500a45b8
      * Link erc20        - 0xa36085F69e2889c224210F603D836748e7dC0088
      *
-     * Network: Rinkeby
-     * Oracle: Chainlink - 0x01be23585060835e02b77ef475b0cc51aa1e0709
-     * Job ID: Chainlink - 6d1bfe27e7034b1d87b5270556b17277
-     * Link erc20        - 0x01BE23585060835E02B77ef475b0Cc51aA1e0709
      *
+     * * Network: Ropsten
+     * Oracle: Chainlink - 0xc99B3D447826532722E41bc36e644ba3479E4365
+     * Job ID: Chainlink - 3cff0a3524694ff8834bda9cf9c779a1
+     * Link erc20        - 0x20fe562d797a42dcb3399062ae9546cd06f63280
      */
     constructor(address _oracle, bytes32 _jobId, address _chainLinkAddress) public {
         setPublicChainlinkToken();
