@@ -97,48 +97,6 @@ contract SmartFundERC20Light is SmartFundLightCore {
     return shares;
   }
 
-
-  /**
-  * @dev Calculates the funds value in deposited token
-  *
-  * @return The current total fund value
-  */
-  function calculateFundValue() public override view returns (uint256) {
-    // Convert ETH balance to core ERC20
-    uint256 ethBalance = exchangePortal.getValue(
-      address(ETH_TOKEN_ADDRESS),
-      coreFundAsset,
-      address(this).balance
-    );
-
-    // If the fund only contains ether, return the funds ether balance converted in core ERC20
-    if (tokenAddresses.length == 1)
-      return ethBalance;
-
-    // Otherwise, we get the value of all the other tokens in ether via exchangePortal
-
-    // Calculate value for ERC20
-    address[] memory fromAddresses = new address[](tokenAddresses.length - 2); // sub ETH + curernt core ERC20
-    uint256[] memory amounts = new uint256[](tokenAddresses.length - 2);
-    uint8 index = 0;
-
-    // get all ERC20 addresses and balance
-    for (uint8 i = 2; i < tokenAddresses.length; i++) {
-      fromAddresses[index] = tokenAddresses[i];
-      amounts[index] = IERC20(tokenAddresses[i]).balanceOf(address(this));
-      index++;
-    }
-    // Ask the Exchange Portal for the value of all the funds tokens in core coin
-    uint256 tokensValue = exchangePortal.getTotalValue(fromAddresses, amounts, coreFundAsset);
-
-    // Get curernt core ERC20 token balance
-    uint256 currentERC20 = IERC20(coreFundAsset).balanceOf(address(this));
-
-    // Sum ETH in ERC20 + Current ERC20 Token + ERC20 in ERC20
-    return ethBalance + currentERC20 + tokensValue;
-  }
-
-
   /**
   * @dev sets new coreFundAsset NOTE: this works only for stable coins
   *
