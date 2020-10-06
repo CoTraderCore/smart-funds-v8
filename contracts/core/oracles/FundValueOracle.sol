@@ -2,6 +2,8 @@ pragma solidity ^0.6.0;
 
 import "https://github.com/smartcontractkit/chainlink/blob/develop/evm-contracts/src/v0.6/ChainlinkClient.sol";
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/access/Ownable.sol";
+import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/IERC20.sol";
+
 
 library Strings {
     function concat(string memory _base, string memory _value) internal pure returns (string memory) {
@@ -43,12 +45,18 @@ contract FundValueOracle is ChainlinkClient, Ownable{
      * Network: Kovan
      * Oracle: Chainlink - 0x2f90A6D021db21e1B2A077c5a37B3C7E75D15b7e
      * Job ID: Chainlink - 29fa9aa13bf1468788b7cc4a500a45b8
-     * Fee: 0.1 LINK
+     * Link erc20        - 0xa36085F69e2889c224210F603D836748e7dC0088
+     *
+     * Network: Rinkeby
+     * Oracle: Chainlink - 0x01be23585060835e02b77ef475b0cc51aa1e0709
+     * Job ID: Chainlink - 6d1bfe27e7034b1d87b5270556b17277
+     * Link erc20        - 0x01BE23585060835E02B77ef475b0Cc51aA1e0709
+     *
      */
-    constructor(address _chainLinkAddress) public {
+    constructor(address _oracle, bytes32 _jobId, address _chainLinkAddress) public {
         setPublicChainlinkToken();
-        oracle = 0x2f90A6D021db21e1B2A077c5a37B3C7E75D15b7e;
-        jobId = "29fa9aa13bf1468788b7cc4a500a45b8";
+        oracle = _oracle;
+        jobId = _jobId;
         fee = 0.1 * 10 ** 18; // 0.1 LINK
         chainLinkAddress = _chainLinkAddress;
     }
