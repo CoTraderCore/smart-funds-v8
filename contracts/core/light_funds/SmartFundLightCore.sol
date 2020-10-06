@@ -182,7 +182,7 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
     // latestOracleCaller = msg.sender
   }
 
-  function calculateFundValue() public view returns (uint256){
+  function calculateFundValue() internal view returns (uint256){
       require(msg.sender == latestOracleCaller, "NO ACCESES TO ORACLE UPDATE");
       // get result from latest Oracle request
       (value) = fundValueOracle.FundDataMap(latestOracleRequestID);
@@ -405,17 +405,6 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
   }
 
   /**
-  * @dev Calculates the funds profit
-  *
-  * @return The funds profit in deposit token (Ether)
-  */
-  function calculateFundProfit() public view returns (int256) {
-    uint256 fundValue = calculateFundValue();
-
-    return int256(fundValue) + int256(totalWeiWithdrawn) - int256(totalWeiDeposited);
-  }
-
-  /**
   * @dev Calculates the amount of shares received according to ether deposited
   *
   * @param _amount    Amount of ether to convert to shares
@@ -449,7 +438,7 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
   * @return fundValue                  The funds current value
   * @return fundManagerTotalCut        The fund managers total cut of the profits until now
   */
-  function calculateFundManagerCut() public view returns (
+  function calculateFundManagerCut() internal view returns (
     uint256 fundManagerRemainingCut, // fm's cut of the profits that has yet to be cashed out (in `depositToken`)
     uint256 fundValue, // total value of fund (in `depositToken`)
     uint256 fundManagerTotalCut // fm's total cut of the profits (in `depositToken`)
@@ -503,21 +492,6 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
 
     // add report
     fundManagerCashedOut = fundManagerCashedOut.add(fundManagerCut);
-  }
-
-  // calculate the current value of an address's shares in the fund
-  function calculateAddressValue(address _address) public view returns (uint256) {
-    if (totalShares == 0)
-      return 0;
-
-    return calculateFundValue().mul(addressToShares[_address]).div(totalShares);
-  }
-
-  // calculate the net profit/loss for an address in this fund
-  function calculateAddressProfit(address _address) public view returns (int256) {
-    uint256 currentAddressValue = calculateAddressValue(_address);
-
-    return int256(currentAddressValue) - addressesNetDeposit[_address];
   }
 
   // This method was added to easily record the funds token balances, may (should?) be removed in the future
