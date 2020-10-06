@@ -31,6 +31,7 @@ contract FundValueOracle is ChainlinkClient, Ownable{
     string public apiPath;
     bytes32[] public requestIdArrays;
     uint256 public fee;
+    address public chainLinkAddress;
 
     address private oracle;
     bytes32 private jobId;
@@ -44,11 +45,12 @@ contract FundValueOracle is ChainlinkClient, Ownable{
      * Job ID: Chainlink - 29fa9aa13bf1468788b7cc4a500a45b8
      * Fee: 0.1 LINK
      */
-    constructor() public {
+    constructor(address _chainLinkAddress) public {
         setPublicChainlinkToken();
         oracle = 0x2f90A6D021db21e1B2A077c5a37B3C7E75D15b7e;
         jobId = "29fa9aa13bf1468788b7cc4a500a45b8";
         fee = 0.1 * 10 ** 18; // 0.1 LINK
+        chainLinkAddress = _chainLinkAddress;
     }
 
     /**
@@ -56,6 +58,16 @@ contract FundValueOracle is ChainlinkClient, Ownable{
      */
     function requestValue(address _fundAddress) public returns (bytes32 requestId)
     {
+       // transfer link commision from sender
+       require(
+        IERC20(chainLinkAddress).transferFrom(
+          msg.sender,
+          address(this),
+          fee
+         ),
+         "CANT TRANSFER FROM"
+        );
+
         Chainlink.Request memory request = buildChainlinkRequest(jobId, address(this), this.fulfill.selector);
 
         // TODO CONVERT ADDRESS TO STRING AND CONCAT API ENDPOIN WITH ADDRESS

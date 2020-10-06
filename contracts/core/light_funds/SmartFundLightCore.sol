@@ -97,8 +97,6 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
   uint256 public latestOracleCallOnBlock;
   uint256 public latestOracleCaller;
 
-  address public linkTokenAddress;
-
   // how many shares belong to each address
   mapping (address => uint256) public addressToShares;
 
@@ -133,7 +131,6 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
     address _exchangePortalAddress,
     address _permittedAddresses,
     address _coreFundAsset,
-    address _linkTokenAddress,
     bool    _isRequireTradeVerification
   )public{
     // never allow a 100% fee
@@ -169,9 +166,6 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
     // Initial core assets
     coreFundAsset = _coreFundAsset;
 
-    // Initial link token address
-    linkTokenAddress = _linkTokenAddress;
-
     // Initial check if fund require trade verification or not
     isRequireTradeVerification = _isRequireTradeVerification;
 
@@ -179,18 +173,12 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
   }
 
   // allow update oracle price
-  function updateFundValueFromOracle() public {
+  function updateFundValueFromOracle(address _oracleTokenAddress, _oracleFee) public {
+    // transfer oracle token from sender and approve to oracle portal 
+    _transferFromSenderAndApproveTo(IERC20(_oracleTokenAddress), _oracleFee, address(fundValueOracle));
     // allow call Oracle only after 10 block after latest call
     require(block.number + 10 >= latestOracleCallOnBlock, "NEED WAIT 10 BLOCKS");
-    // transfer link commision from sender
-    require(
-      IERC20(linkTokenAddress).transferFrom(
-        msg.sender,
-        address(fundValueOracle),
-        fundValueOracle.fee()
-       ),
-       "CANT TRANSFER FROM LINK"
-    );
+
     // call oracle
     latestOracleRequestID = fundValueOracle.requestValue(address(this));
 
@@ -588,6 +576,20 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
   */
   function resetApprove(address _token, address _spender) external onlyOwner {
     IERC20(_token).approve(_spender, 0);
+  }
+
+
+  /**
+  * @dev Transfers tokens to this contract and approves them to another address
+  *
+  * @param _source          Token to transfer and approve
+  * @param _sourceAmount    The amount to transfer and approve (in _source token)
+  * @param _to              Address to approve to
+  */
+  function _transferFromSenderAndApproveTo(IERC20 _source, uint256 _sourceAmount, address _to) private {
+    require(_source.transferFrom(msg.sender, address(this), _sourceAmount), "CAN NOT TRANSFER FROM");
+    // approve
+    _source.approve(_to, _sourceAmount);
   }
 
   // Fallback payable function in order to be able to receive ether from other contracts
