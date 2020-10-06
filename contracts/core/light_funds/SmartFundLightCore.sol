@@ -91,7 +91,11 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
   // If true the contract will require each new asset to buy to be on a special Merkle tree list
   bool public isRequireTradeVerification;
 
+  // Data for Oracle updates
   bytes32 public latestOracleRequestID;
+  uint256 public latestOracleCallOnTime;
+  uint256 public latestOracleCallOnBlock;
+  uint256 public latestOracleCaller;
 
   // how many shares belong to each address
   mapping (address => uint256) public addressToShares;
@@ -108,6 +112,14 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
   event Withdraw(address indexed user, uint256 sharesRemoved, uint256 totalShares);
   event Trade(address src, uint256 srcAmount, address dest, uint256 destReceived);
   event SmartFundCreated(address indexed owner);
+
+  modifier oracleFreeze {
+    require(
+        now + 3 minutes > latestOracleCallOnTime,
+        "ORACLE REQUIRE 3 MINUTES FREEZE"
+     );
+    _;
+  }
 
 
   constructor(
@@ -160,18 +172,22 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
   }
 
   function updateFundValueFromOracle() public {
+    require(block.number + 10 >= latestOracleCallOnBlock, "NEED WAIT 10 BLOCKS");
     // require transfer from
     // call Oracle
     // update tx data
-
+    // latestOracleCallOnTime = now
+    // latestOracleCallOnBlock = block.number
     // latestOracleRequestID
+    // latestOracleCaller = msg.sender
   }
 
   function calculateFundValue() public view returns (uint256){
+      require(msg.sender == latestOracleCaller, "NO ACCESES TO ORACLE UPDATE");
       // get result from latest Oracle request
-      (value, requestTime) = fundValueOracle.FundDataMap(latestOracleRequestID);
+      (value) = fundValueOracle.FundDataMap(latestOracleRequestID);
       // require update fund value each 3 hours
-      if(now > requestTime + 3 minutes){
+      if(now > latestOracleCallOnTime + 3 minutes){
          return value;
       }
       else{
@@ -293,7 +309,10 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
     uint256[] calldata _positions,
     bytes calldata _additionalData,
     uint256 _minReturn
-  ) external onlyOwner {
+  ) external
+    onlyOwner
+    oracleFreeze
+  {
     require(_minReturn > 0, "MIN_RETURN_0");
 
     uint256 receivedAmount;
