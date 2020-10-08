@@ -6,6 +6,7 @@ interface SmartFundERC20LightFactoryInterface {
     address _exchangePortalAddress,
     address _permittedAddresses,
     address _coinAddress,
+    address _fundValueOracle,
     bool    _isRequireTradeVerification
   )
   external

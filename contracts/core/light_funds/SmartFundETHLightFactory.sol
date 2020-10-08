@@ -15,6 +15,7 @@ contract SmartFundETHLightFactory {
     uint256 _successFee,
     address _exchangePortalAddress,
     address _permittedAddresses,
+    address _fundValueOracle,
     bool    _isRequireTradeVerification
   )
   public
@@ -27,6 +28,7 @@ contract SmartFundETHLightFactory {
       platfromAddress,
       _exchangePortalAddress,
       _permittedAddresses,
+      _fundValueOracle,
       _isRequireTradeVerification
     );
 

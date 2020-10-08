@@ -15,6 +15,7 @@ pragma solidity ^0.6.12;
 
 import "../interfaces/ExchangePortalInterface.sol";
 import "../interfaces/PermittedAddressesInterface.sol";
+import "../interfaces/IFundValueOracle.sol";
 
 import "../../zeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 import "../../zeppelin-solidity/contracts/access/Ownable.sol";
@@ -91,11 +92,14 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
   // If true the contract will require each new asset to buy to be on a special Merkle tree list
   bool public isRequireTradeVerification;
 
+  // Oracle contract instance
+  IFundValueOracle public fundValueOracle;
+
   // Data for Oracle updates
   bytes32 public latestOracleRequestID;
   uint256 public latestOracleCallOnTime;
   uint256 public latestOracleCallOnBlock;
-  uint256 public latestOracleCaller;
+  address public latestOracleCaller;
 
   // how many shares belong to each address
   mapping (address => uint256) public addressToShares;
@@ -131,6 +135,7 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
     address _exchangePortalAddress,
     address _permittedAddresses,
     address _coreFundAsset,
+    address _fundValueOracle,
     bool    _isRequireTradeVerification
   )public{
     // never allow a 100% fee
@@ -166,6 +171,9 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
     // Initial core assets
     coreFundAsset = _coreFundAsset;
 
+    // Initial fund Oracle
+    fundValueOracle = IFundValueOracle(_fundValueOracle);
+
     // Initial check if fund require trade verification or not
     isRequireTradeVerification = _isRequireTradeVerification;
 
@@ -173,8 +181,8 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
   }
 
   // allow update oracle price
-  function updateFundValueFromOracle(address _oracleTokenAddress, _oracleFee) public {
-    // transfer oracle token from sender and approve to oracle portal 
+  function updateFundValueFromOracle(address _oracleTokenAddress, uint256 _oracleFee) public {
+    // transfer oracle token from sender and approve to oracle portal
     _transferFromSenderAndApproveTo(IERC20(_oracleTokenAddress), _oracleFee, address(fundValueOracle));
     // allow call Oracle only after 10 block after latest call
     require(block.number + 10 >= latestOracleCallOnBlock, "NEED WAIT 10 BLOCKS");
@@ -194,10 +202,10 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
 
   // core function for calculate deposit and withdraw and managerWithdraw
   // return data from Oracle
-  function calculateFundValue() internal view returns (uint256) {
+  function calculateFundValue() internal returns (uint256) {
       require(msg.sender == latestOracleCaller, "SENDER SHOULD BE LATEST ORACLE CALLER");
       // get result from latest Oracle request
-      (value) = fundValueOracle.getFundValueByID(latestOracleRequestID);
+      (uint256 value) = fundValueOracle.getFundValueByID(latestOracleRequestID);
       // caller can update only in 3 minutes
       if(now > latestOracleCallOnTime + 3 minutes){
         // reset latest Oracle Caller for protect from double call
@@ -426,7 +434,7 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
   *
   * @return Amount of shares to be received
   */
-  function calculateDepositToShares(uint256 _amount) public view returns (uint256) {
+  function calculateDepositToShares(uint256 _amount) internal returns (uint256) {
     uint256 fundManagerCut;
     uint256 fundValue;
 
@@ -453,7 +461,7 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
   * @return fundValue                  The funds current value
   * @return fundManagerTotalCut        The fund managers total cut of the profits until now
   */
-  function calculateFundManagerCut() internal view returns (
+  function calculateFundManagerCut() internal returns (
     uint256 fundManagerRemainingCut, // fm's cut of the profits that has yet to be cashed out (in `depositToken`)
     uint256 fundValue, // total value of fund (in `depositToken`)
     uint256 fundManagerTotalCut // fm's total cut of the profits (in `depositToken`)

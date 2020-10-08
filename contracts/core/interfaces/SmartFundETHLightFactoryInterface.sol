@@ -5,6 +5,7 @@ interface SmartFundETHLightFactoryInterface {
     uint256 _successFee,
     address _exchangePortalAddress,
     address _permittedAddresses,
+    address _fundValueOracle,
     bool    _isRequireTradeVerification
   )
   external

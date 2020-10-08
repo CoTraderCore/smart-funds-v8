@@ -7,6 +7,7 @@ interface SmartFundETHFactoryInterface {
     address _poolPortalAddress,
     address _defiPortal,
     address _permittedAddresses,
+    address _fundValueOracle,
     bool    _isRequireTradeVerification
   )
   external

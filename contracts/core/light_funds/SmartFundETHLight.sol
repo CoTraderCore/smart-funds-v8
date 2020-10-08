@@ -19,6 +19,7 @@ contract SmartFundETHLight is SmartFundLightCore {
   * @param _platformAddress              Address of platform to send fees to
   * @param _exchangePortalAddress        Address of initial exchange portal
   * @param _permittedAddresses           Address of permittedAddresses contract
+  * @param _fundValueOracle              Address of Oracle contract
   * @param _isRequireTradeVerification   If true fund will require verification from Merkle White list for each new asset
   */
   constructor(
@@ -28,6 +29,7 @@ contract SmartFundETHLight is SmartFundLightCore {
     address _platformAddress,
     address _exchangePortalAddress,
     address _permittedAddresses,
+    address _fundValueOracle,
     bool    _isRequireTradeVerification
   )
   SmartFundLightCore(
@@ -38,6 +40,7 @@ contract SmartFundETHLight is SmartFundLightCore {
     _exchangePortalAddress,
     _permittedAddresses,
     address(0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee),
+    _fundValueOracle,
     _isRequireTradeVerification
   )
   public{}

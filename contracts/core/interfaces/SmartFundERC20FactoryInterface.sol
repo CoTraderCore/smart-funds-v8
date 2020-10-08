@@ -8,6 +8,7 @@ interface SmartFundERC20FactoryInterface {
     address _defiPortal,
     address _permittedAddresses,
     address _coinAddress,
+    address _fundValueOracle,
     bool    _isRequireTradeVerification
   )
   external

@@ -24,6 +24,7 @@ contract SmartFundERC20Light is SmartFundLightCore {
   * @param _platformAddress              Address of platform to send fees to
   * @param _exchangePortalAddress        Address of initial exchange portal
   * @param _permittedAddresses           Address of permittedAddresses contract
+  * @param _fundValueOracle              Address of Oracle contract
   * @param _isRequireTradeVerification   If true fund will require verification from Merkle White list for each new asset
   */
   constructor(
@@ -34,6 +35,7 @@ contract SmartFundERC20Light is SmartFundLightCore {
     address _exchangePortalAddress,
     address _permittedAddresses,
     address _coinAddress,
+    address _fundValueOracle,
     bool    _isRequireTradeVerification
   )
   SmartFundLightCore(
@@ -44,6 +46,7 @@ contract SmartFundERC20Light is SmartFundLightCore {
     _exchangePortalAddress,
     _permittedAddresses,
     _coinAddress,
+    _fundValueOracle,
     _isRequireTradeVerification
   )
   public {

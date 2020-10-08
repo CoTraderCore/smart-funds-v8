@@ -16,6 +16,7 @@ contract SmartFundERC20LightFactory {
     address _exchangePortalAddress,
     address _permittedAddresses,
     address _coinAddress,
+    address _fundValueOracle,
     bool    _isRequireTradeVerification
   )
   public
@@ -29,6 +30,7 @@ contract SmartFundERC20LightFactory {
       _exchangePortalAddress,
       _permittedAddresses,
       _coinAddress,
+      _fundValueOracle,
       _isRequireTradeVerification
     );
 
