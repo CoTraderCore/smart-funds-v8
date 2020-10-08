@@ -42,23 +42,15 @@ contract FundValueOracle is ChainlinkClient, Ownable{
     mapping (bytes32 => uint256) public getFundValueByID;
 
     /**
-     * Network: Kovan
-     * Oracle: Chainlink - 0x2f90A6D021db21e1B2A077c5a37B3C7E75D15b7e
-     * Job ID: Chainlink - 29fa9aa13bf1468788b7cc4a500a45b8
-     * Link erc20        - 0xa36085F69e2889c224210F603D836748e7dC0088
-     *
-     *
-     * * Network: Ropsten
-     * Oracle: Chainlink - 0xc99B3D447826532722E41bc36e644ba3479E4365
-     * Job ID: Chainlink - 3cff0a3524694ff8834bda9cf9c779a1
-     * Link erc20        - 0x20fe562d797a42dcb3399062ae9546cd06f63280
-     */
-    constructor(address _oracle, bytes32 _jobId, address _chainLinkAddress) public {
+       WARNING
+       RINKEBY CONSTRUCTOR
+    */
+    constructor() public {
         setPublicChainlinkToken();
-        oracle = _oracle;
-        jobId = _jobId;
-        fee = 0.1 * 10 ** 18; // 0.1 LINK
-        chainLinkAddress = _chainLinkAddress;
+        oracle = address(0x7AFe1118Ea78C1eae84ca8feE5C65Bc76CcF879e);
+        jobId = "6d1bfe27e7034b1d87b5270556b17277";
+        fee = 1 * 10 ** 18; // 1 LINK
+        chainLinkAddress = address(0x01BE23585060835E02B77ef475b0Cc51aA1e0709);
     }
 
     /**
@@ -67,13 +59,10 @@ contract FundValueOracle is ChainlinkClient, Ownable{
     function requestValue(address _fundAddress) public returns (bytes32 requestId)
     {
        // transfer link commision from sender
-       require(
-        IERC20(chainLinkAddress).transferFrom(
-          msg.sender,
-          address(this),
-          fee
-         ),
-         "CANT TRANSFER FROM"
+       IERC20(chainLinkAddress).transferFrom(
+         msg.sender,
+         address(this),
+         fee
         );
 
         Chainlink.Request memory request = buildChainlinkRequest(jobId, address(this), this.fulfill.selector);
@@ -94,6 +83,8 @@ contract FundValueOracle is ChainlinkClient, Ownable{
     function fulfill(bytes32 _requestId, uint256 _result) public recordChainlinkFulfillment(_requestId)
     {
       getFundValueByID[_requestId] = _result;
+      // for test
+      requestIdArrays.push(_requestId);
     }
 
     // owne can update api endpoint
