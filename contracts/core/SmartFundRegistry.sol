@@ -34,6 +34,9 @@ contract SmartFundRegistry is Ownable {
   // Address of CoTrader coin be set in constructor
   address public COTCoinAddress;
 
+  // Address of Oracle
+  address public oracleAddress;
+
   // Factories
   SmartFundETHFactoryInterface public smartFundETHFactory;
   SmartFundERC20FactoryInterface public smartFundERC20Factory;
@@ -59,6 +62,7 @@ contract SmartFundRegistry is Ownable {
   * @param _smartFundERC20LightFactory   Address of smartFund USD factory
   * @param _defiPortalAddress            Address of defiPortal contract
   * @param _permittedAddresses           Address of permittedAddresses contract
+  * @param _oracleAddress                Address of fund value oracle contract
   */
   constructor(
     address _exchangePortalAddress,
@@ -70,7 +74,8 @@ contract SmartFundRegistry is Ownable {
     address _smartFundETHLightFactory,
     address _smartFundERC20LightFactory,
     address _defiPortalAddress,
-    address _permittedAddresses
+    address _permittedAddresses,
+    address _oracleAddress
   ) public {
     exchangePortalAddress = _exchangePortalAddress;
     poolPortalAddress = _poolPortalAddress;
@@ -82,6 +87,7 @@ contract SmartFundRegistry is Ownable {
     smartFundERC20LightFactory = SmartFundERC20LightFactoryInterface(_smartFundERC20LightFactory);
     defiPortalAddress = _defiPortalAddress;
     permittedAddresses = PermittedAddressesInterface(_permittedAddresses);
+    oracleAddress = _oracleAddress;
   }
 
   /**
@@ -115,6 +121,7 @@ contract SmartFundRegistry is Ownable {
         poolPortalAddress,
         defiPortalAddress,
         address(permittedAddresses),
+        oracleAddress,
         _isRequireTradeVerification
       );
 
@@ -132,6 +139,7 @@ contract SmartFundRegistry is Ownable {
         defiPortalAddress,
         address(permittedAddresses),
         coinAddress,
+        oracleAddress,
         _isRequireTradeVerification
       );
     }
@@ -169,6 +177,7 @@ contract SmartFundRegistry is Ownable {
         _successFee, // manager and platform fee
         exchangePortalAddress,
         address(permittedAddresses),
+        oracleAddress,
         _isRequireTradeVerification
       );
 
@@ -184,6 +193,7 @@ contract SmartFundRegistry is Ownable {
         exchangePortalAddress,
         address(permittedAddresses),
         coinAddress,
+        oracleAddress,
         _isRequireTradeVerification
       );
     }
@@ -306,6 +316,15 @@ contract SmartFundRegistry is Ownable {
   */
   function setNewSmartFundERC20LightFactory(address _smartFundERC20LightFactory) external onlyOwner {
     smartFundERC20LightFactory = SmartFundERC20LightFactoryInterface(_smartFundERC20LightFactory);
+  }
+
+  /**
+  * @dev Owner can set new Oracle
+  *
+  * @param _oracleAddress    address of Oracle contract
+  */
+  function setNewOracle(address _oracleAddress) external onlyOwner {
+    oracleAddress = _oracleAddress;
   }
 
   /**
