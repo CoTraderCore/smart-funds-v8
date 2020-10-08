@@ -120,8 +120,8 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
 
   modifier oracleFreeze {
     require(
-        now + 3 minutes > latestOracleCallOnTime,
-        "ORACLE REQUIRE 3 MINUTES FREEZE"
+        now + 5 minutes > latestOracleCallOnTime,
+        "ORACLE REQUIRE 5 MINUTES FREEZE"
      );
     _;
   }
@@ -206,8 +206,8 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
       require(msg.sender == latestOracleCaller, "SENDER SHOULD BE LATEST ORACLE CALLER");
       // get result from latest Oracle request
       (uint256 value) = fundValueOracle.getFundValueByID(latestOracleRequestID);
-      // caller can update only in 3 minutes
-      if(now > latestOracleCallOnTime + 3 minutes){
+      // caller can update only in 5 minutes
+      if(latestOracleCallOnTime + 5 minutes > now){
         // reset latest Oracle Caller for protect from double call
         latestOracleCaller = address(0);
         // return data
