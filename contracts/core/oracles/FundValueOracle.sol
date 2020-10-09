@@ -71,7 +71,7 @@ contract FundValueOracle is ChainlinkClient, Ownable{
 
         // Set the URL to perform the GET request on
         request.add("get", path);
-        request.add("path", "data.year");
+        request.add("path", "result");
 
         // Sends the request
         return sendChainlinkRequestTo(oracle, request, fee);
@@ -97,7 +97,7 @@ contract FundValueOracle is ChainlinkClient, Ownable{
       fee = _fee;
     }
 
-    // helper for convert address to string 
+    // helper for convert address to string
     function addressToString(address _address) public pure returns(string memory) {
        bytes32 _bytes = bytes32(uint256(_address));
        bytes memory HEX = "0123456789abcdef";
