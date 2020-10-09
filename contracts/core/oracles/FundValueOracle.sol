@@ -67,10 +67,10 @@ contract FundValueOracle is ChainlinkClient, Ownable{
 
         Chainlink.Request memory request = buildChainlinkRequest(jobId, address(this), this.fulfill.selector);
 
-        // TODO CONVERT ADDRESS TO STRING AND CONCAT API ENDPOIN WITH ADDRESS
+        string memory path = apiPath.concat(addressToString(_fundAddress));
 
         // Set the URL to perform the GET request on
-        request.add("get", "https://reqres.in/api/products/3");
+        request.add("get", path);
         request.add("path", "data.year");
 
         // Sends the request
@@ -88,12 +88,26 @@ contract FundValueOracle is ChainlinkClient, Ownable{
     }
 
     // owne can update api endpoint
-    function updateApiPath(string memory _apiPath) external onlyOwner {
+    function updateApiPath(string calldata _apiPath) external onlyOwner {
       apiPath = _apiPath;
     }
 
     // owne can update fee
     function updateFee(uint256 _fee) external onlyOwner {
       fee = _fee;
+    }
+
+    // helper for convert address to string 
+    function addressToString(address _address) public pure returns(string memory) {
+       bytes32 _bytes = bytes32(uint256(_address));
+       bytes memory HEX = "0123456789abcdef";
+       bytes memory _string = new bytes(42);
+       _string[0] = '0';
+       _string[1] = 'x';
+       for(uint i = 0; i < 20; i++) {
+           _string[2+i*2] = HEX[uint8(_bytes[i + 12] >> 4)];
+           _string[3+i*2] = HEX[uint8(_bytes[i + 12] & 0x0f)];
+       }
+       return string(_string);
     }
 }
