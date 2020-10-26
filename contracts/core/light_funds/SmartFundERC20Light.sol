@@ -64,14 +64,10 @@ contract SmartFundERC20Light is SmartFundLightCore {
   *
   * @return The amount of shares allocated to the depositor
   */
-  function deposit(uint256 depositAmount) external returns (uint256) {
+  function deposit(uint256 depositAmount) external verifyOracleSender returns (uint256) {
     // Check if the sender is allowed to deposit into the fund
     if (onlyWhitelist)
       require(whitelist[msg.sender]);
-
-    // Require update from Oracle if alredy deposited
-    if(totalShares > 0)
-      require(msg.sender == latestOracleCaller, "SENDER_SHOULD_BE_LATEST_ORACLE_CALLER");
 
     // Require that the amount sent is not 0
     require(depositAmount > 0, "ZERO_DEPOSIT");

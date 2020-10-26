@@ -118,11 +118,20 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
   event SmartFundCreated(address indexed owner);
   event OracleUpdate(address caller, uint256 triggerTime, bytes32 id);
 
-  modifier oracleFreeze {
+  // freeze trade while user do deposit and withdraw (5 minutes)
+  modifier freezeTradeForDW {
     require(
-        now + 5 minutes > latestOracleCallOnTime,
-        "ORACLE REQUIRE 5 MINUTES FREEZE"
+        now > latestOracleCallOnTime + 5 minutes,
+        "FUND_REQUIRE_5_MINUTES_FREEZE_FOR_UPDATE_PRICE"
      );
+    _;
+  }
+
+  // not allow call user B (for a 5 minutes) if user A not finished operation
+  // allow call any user for a first deposit
+  modifier verifyOracleSender {
+    if(totalShares > 0 && latestOracleCallOnTime + 5 minutes > now)
+      require(msg.sender == latestOracleCaller, "SENDER_SHOULD_BE_LATEST_ORACLE_CALLER");
     _;
   }
 
@@ -182,11 +191,10 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
 
   // allow update oracle price
   function updateFundValueFromOracle(address _oracleTokenAddress, uint256 _oracleFee) public {
+    // allow call Oracle only after 10 block after latest call
+    require(block.number >= latestOracleCallOnBlock + 10, "NEED WAIT 10 BLOCKS");
     // transfer oracle token from sender and approve to oracle portal
     _transferFromSenderAndApproveTo(IERC20(_oracleTokenAddress), _oracleFee, address(fundValueOracle));
-    // allow call Oracle only after 10 block after latest call
-    require(block.number + 10 >= latestOracleCallOnBlock, "NEED WAIT 10 BLOCKS");
-
     // call oracle
     latestOracleRequestID = fundValueOracle.requestValue(address(this));
 
@@ -262,10 +270,9 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
   *
   * @param _percentageWithdraw    The percentage of the users shares to withdraw.
   */
-  function withdraw(uint256 _percentageWithdraw) external {
+  function withdraw(uint256 _percentageWithdraw) external verifyOracleSender {
     require(totalShares != 0, "EMPTY_SHARES");
     require(_percentageWithdraw <= TOTAL_PERCENTAGE, "INCORRECT_PERCENT");
-    require(msg.sender == latestOracleCaller, "SENDER_SHOULD_BE_LATEST_ORACLE_CALLER");
 
     uint256 percentageWithdraw = (_percentageWithdraw == 0) ? TOTAL_PERCENTAGE : _percentageWithdraw;
 
@@ -333,7 +340,7 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
     uint256 _minReturn
   ) external
     onlyOwner
-    oracleFreeze
+    freezeTradeForDW
   {
     require(_minReturn > 0, "MIN_RETURN_0");
 
@@ -510,8 +517,7 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
   /**
   * @dev Allows the fund manager to withdraw their cut of the funds profit
   */
-  function fundManagerWithdraw() public onlyOwner {
-    require(msg.sender == latestOracleCaller, "SENDER_SHOULD_BE_LATEST_ORACLE_CALLER");
+  function fundManagerWithdraw() external verifyOracleSender onlyOwner {
     uint256 fundManagerCut;
     uint256 fundValue;
 
