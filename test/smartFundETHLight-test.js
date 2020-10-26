@@ -274,13 +274,19 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       assert.equal(await smartFundETH.totalShares(), 0)
 
       await smartFundETH.deposit({ from: userOne, value: 100 })
+      assert.equal(await smartFundETH.addressToShares(userOne), toWei(String(1)))
+      assert.equal(await smartFundETH.totalShares(), toWei(String(1)))
 
       await smartFundETH.deposit({ from: userOne, value: 100 })
       .should.be.rejectedWith(EVMRevert)
+      assert.equal(await smartFundETH.addressToShares(userOne), toWei(String(1)))
+      assert.equal(await smartFundETH.totalShares(), toWei(String(1)))
 
       await updateOracle(100, userOne)
 
       await smartFundETH.deposit({ from: userOne, value: 100 })
+      assert.equal(await smartFundETH.addressToShares(userOne), toWei(String(2)))
+      assert.equal(await smartFundETH.totalShares(), toWei(String(2)))
     })
   })
 
