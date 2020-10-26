@@ -501,8 +501,7 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
   }
 
   // return the funds profit in deposit token
-  // NOTE: Require Oracle call
-  function calculateFundProfit() public returns (int256) {
+  function calculateFundProfit() public view returns (int256) {
     uint256 fundValue = calculateFundValue();
 
     return int256(fundValue) + int256(totalWeiWithdrawn) - int256(totalWeiDeposited);
