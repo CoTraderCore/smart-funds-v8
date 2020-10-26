@@ -53,6 +53,7 @@ const TOKEN_KEY_CRYPTOCURRENCY = "0x43525950544f43555252454e43590000000000000000
 // Contracts instance
 let xxxERC,
     DAI,
+    LINK,
     exchangePortal,
     smartFundETH,
     BNT,
@@ -100,6 +101,17 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       18,
       toWei(String(100000000))
     )
+
+    LINK = await Token.new(
+      "LINK Chain",
+      "LINK",
+      18,
+      toWei(String(100000000))
+    )
+
+    // give some link another users
+    await LINK.transfer(userTwo, toWei(String(1000)))
+    await LINK.transfer(userThree, toWei(String(1000)))
 
 
     // Create MerkleTREE instance

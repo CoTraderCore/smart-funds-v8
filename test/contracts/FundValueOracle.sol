@@ -26,7 +26,7 @@ contract FundValueOracle {
        fee
       ));
 
-      requestId = bytes32(_fundAddress);
+      requestId = bytes32(uint256(1));
       getFundValueByID[requestId] = value;
   }
 
