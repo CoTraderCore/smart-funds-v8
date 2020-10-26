@@ -663,193 +663,209 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
   //     })
   // })
 
-  describe('Withdraw', function() {
-   // update and provide data from Oracle
-   async function updateOracle(value, sender){
+  // describe('Withdraw', function() {
+  //  // update and provide data from Oracle
+  //  async function updateOracle(value, sender){
+  //    await Oracle.setMockValue(value)
+  //    await LINK.approve(smartFundETH.address, toWei(String(1)), {from: sender})
+  //    await smartFundETH.updateFundValueFromOracle(LINK.address, toWei(String(1)), {from: sender})
+  //  }
+  //
+  //  it('should be able to withdraw all deposited funds', async function() {
+  //     const totalShares = await smartFundETH.totalShares()
+  //     assert.equal(totalShares, 0)
+  //
+  //     await smartFundETH.deposit({ from: userOne, value: 100 })
+  //     assert.equal(await web3.eth.getBalance(smartFundETH.address), 100)
+  //
+  //     await updateOracle(100, userOne)
+  //
+  //     await smartFundETH.withdraw(0, { from: userOne })
+  //     assert.equal(await web3.eth.getBalance(smartFundETH.address), 0)
+  //   })
+  //
+  //   it('should be able to withdraw percentage of deposited funds', async function() {
+  //     let totalShares
+  //
+  //     totalShares = await smartFundETH.totalShares()
+  //     assert.equal(totalShares, 0)
+  //
+  //     await smartFundETH.deposit({ from: userOne, value: 100 })
+  //
+  //     totalShares = await smartFundETH.totalShares()
+  //
+  //     await updateOracle(100, userOne)
+  //
+  //     await smartFundETH.withdraw(5000, { from: userOne }) // 50.00%
+  //
+  //     assert.equal(await smartFundETH.totalShares(), totalShares / 2)
+  //   })
+  //
+  //   it('should be able to withdraw deposited funds with multiple users', async function() {
+  //     // deposit
+  //     await smartFundETH.deposit({ from: userOne, value: 100 })
+  //
+  //     await updateOracle(100, userTwo)
+  //
+  //     assert.equal(await smartFundETH.calculateFundValue(), 100)
+  //     await smartFundETH.deposit({ from: userTwo, value: 100 })
+  //
+  //     // withdraw from userOne
+  //     await updateOracle(200, userOne)
+  //     assert.equal(await smartFundETH.calculateFundValue(), 200)
+  //     let sfBalance
+  //     sfBalance = await web3.eth.getBalance(smartFundETH.address)
+  //     assert.equal(sfBalance, 200)
+  //     await smartFundETH.withdraw(0, { from: userOne })
+  //     sfBalance = await web3.eth.getBalance(smartFundETH.address)
+  //
+  //     assert.equal(sfBalance, 100)
+  //
+  //     // withdraw from userTwo
+  //     await updateOracle(100, userTwo)
+  //     await smartFundETH.withdraw(0, { from: userTwo })
+  //     sfBalance = await web3.eth.getBalance(smartFundETH.address)
+  //     assert.equal(sfBalance, 0)
+  //   })
+  // })
+
+
+  describe('Fund Manager', function() {
+    // update and provide data from Oracle
+    async function updateOracle(value, sender){
      await Oracle.setMockValue(value)
      await LINK.approve(smartFundETH.address, toWei(String(1)), {from: sender})
      await smartFundETH.updateFundValueFromOracle(LINK.address, toWei(String(1)), {from: sender})
-   }
+    }
 
-   it('should be able to withdraw all deposited funds', async function() {
-      const totalShares = await smartFundETH.totalShares()
-      assert.equal(totalShares, 0)
+    it('should calculate fund manager and platform cut when no profits', async function() {
+      await deployContracts(1500)
+      await updateOracle(0, userOne)
 
-      await smartFundETH.deposit({ from: userOne, value: 100 })
-      assert.equal(await web3.eth.getBalance(smartFundETH.address), 100)
+      const {
+        fundManagerRemainingCut,
+        fundValue,
+        fundManagerTotalCut,
+      } = await smartFundETH.calculateFundManagerCut()
 
-      await updateOracle(100, userOne)
-
-      await smartFundETH.withdraw(0, { from: userOne })
-      assert.equal(await web3.eth.getBalance(smartFundETH.address), 0)
+      assert.equal(fundManagerRemainingCut, 0)
+      assert.equal(fundValue, 0)
+      assert.equal(fundManagerTotalCut, 0)
     })
 
-    it('should be able to withdraw percentage of deposited funds', async function() {
-      let totalShares
-
-      totalShares = await smartFundETH.totalShares()
-      assert.equal(totalShares, 0)
-
-      await smartFundETH.deposit({ from: userOne, value: 100 })
-
-      totalShares = await smartFundETH.totalShares()
-
-      await updateOracle(100, userOne)
-
-      await smartFundETH.withdraw(5000, { from: userOne }) // 50.00%
-
-      assert.equal(await smartFundETH.totalShares(), totalShares / 2)
-    })
-
-    it('should be able to withdraw deposited funds with multiple users', async function() {
+    const fundManagerTest = async (expectedFundManagerCut = 15, self) => {
       // deposit
       await smartFundETH.deposit({ from: userOne, value: 100 })
+      // send xxx to exchange
+      await xxxERC.transfer(exchangePortal.address, 200, { from: userOne })
 
-      await updateOracle(100, userTwo)
+      // get proof and position for dest token
+      const proofXXX = MerkleTREE.getProof(keccak256(xxxERC.address)).map(x => buf2hex(x.data))
+      const positionXXX = MerkleTREE.getProof(keccak256(xxxERC.address)).map(x => x.position === 'right' ? 1 : 0)
 
-      assert.equal(await smartFundETH.calculateFundValue(), 100)
-      await smartFundETH.deposit({ from: userTwo, value: 100 })
+      // Trade 100 ether for 100 xxx
+      await smartFundETH.trade(
+        ETH_TOKEN_ADDRESS,
+        100,
+        xxxERC.address,
+        2,
+        proofXXX,
+        positionXXX,
+        ONEINCH_MOCK_ADDITIONAL_PARAMS, 1,{
+        from: userOne,
+      })
 
-      // withdraw from userOne
+      // increase price of xxx. Ratio of 1/2 means 1 eth = 1/2 xxx
+      await exchangePortal.setRatio(1, 2)
+
       await updateOracle(200, userOne)
-      assert.equal(await smartFundETH.calculateFundValue(), 200)
-      let sfBalance
-      sfBalance = await web3.eth.getBalance(smartFundETH.address)
-      assert.equal(sfBalance, 200)
-      await smartFundETH.withdraw(0, { from: userOne })
-      sfBalance = await web3.eth.getBalance(smartFundETH.address)
 
-      assert.equal(sfBalance, 100)
+      // check profit and cuts are corrects
+      const {
+        fundManagerRemainingCut,
+        fundValue,
+        fundManagerTotalCut,
+      } = await smartFundETH.calculateFundManagerCut()
 
-      // withdraw from userTwo 
-      await updateOracle(100, userTwo)
-      await smartFundETH.withdraw(0, { from: userTwo })
-      sfBalance = await web3.eth.getBalance(smartFundETH.address)
-      assert.equal(sfBalance, 0)
+      assert.equal(fundValue, 200)
+      assert.equal(fundManagerRemainingCut.toNumber(), expectedFundManagerCut)
+      assert.equal(fundManagerTotalCut.toNumber(), expectedFundManagerCut)
+    }
+
+    it('should calculate fund manager and platform cut correctly', async function() {
+      await deployContracts(1500)
+      await fundManagerTest()
+    })
+
+    it('should calculate fund manager and platform cut correctly when not set', async function() {
+      await deployContracts(0)
+      await fundManagerTest(0)
+    })
+
+    it('should calculate fund manager and platform cut correctly when no platform fee', async function() {
+      await deployContracts(1500)
+      await fundManagerTest(15)
+    })
+
+    it('should calculate fund manager and platform cut correctly when no success fee', async function() {
+      await deployContracts(0)
+      await fundManagerTest(0)
+    })
+
+    it('should be able to withdraw fund manager profits', async function() {
+      await deployContracts(2000)
+      await fundManagerTest(20)
+
+      await updateOracle(200, userOne)
+
+      await smartFundETH.fundManagerWithdraw({ from: userOne })
+
+      await updateOracle(180, userOne)
+
+      const {
+        fundManagerRemainingCut,
+        fundValue,
+        fundManagerTotalCut,
+      } = await smartFundETH.calculateFundManagerCut()
+
+      assert.equal(fundValue, 180)
+      assert.equal(fundManagerRemainingCut, 0)
+      assert.equal(fundManagerTotalCut, 20)
     })
   })
-  //
-  // describe('Fund Manager', function() {
-  //   it('should calculate fund manager and platform cut when no profits', async function() {
-  //     await deployContracts(1500)
-  //     const {
-  //       fundManagerRemainingCut,
-  //       fundValue,
-  //       fundManagerTotalCut,
-  //     } = await smartFundETH.calculateFundManagerCut()
-  //
-  //     assert.equal(fundManagerRemainingCut, 0)
-  //     assert.equal(fundValue, 0)
-  //     assert.equal(fundManagerTotalCut, 0)
-  //   })
-  //
-  //   const fundManagerTest = async (expectedFundManagerCut = 15, self) => {
-  //     // deposit
-  //     await smartFundETH.deposit({ from: userOne, value: 100 })
-  //     // send xxx to exchange
-  //     await xxxERC.transfer(exchangePortal.address, 200, { from: userOne })
-  //
-  //     // get proof and position for dest token
-  //     const proofXXX = MerkleTREE.getProof(keccak256(xxxERC.address)).map(x => buf2hex(x.data))
-  //     const positionXXX = MerkleTREE.getProof(keccak256(xxxERC.address)).map(x => x.position === 'right' ? 1 : 0)
-  //
-  //     // Trade 100 ether for 100 xxx
-  //     await smartFundETH.trade(
-  //       ETH_TOKEN_ADDRESS,
-  //       100,
-  //       xxxERC.address,
-  //       2,
-  //       proofXXX,
-  //       positionXXX,
-  //       ONEINCH_MOCK_ADDITIONAL_PARAMS, 1,{
-  //       from: userOne,
-  //     })
-  //
-  //     // increase price of xxx. Ratio of 1/2 means 1 eth = 1/2 xxx
-  //     await exchangePortal.setRatio(1, 2)
-  //
-  //     // check profit and cuts are corrects
-  //     const {
-  //       fundManagerRemainingCut,
-  //       fundValue,
-  //       fundManagerTotalCut,
-  //     } = await smartFundETH.calculateFundManagerCut()
-  //
-  //     assert.equal(fundValue, 200)
-  //     assert.equal(fundManagerRemainingCut.toNumber(), expectedFundManagerCut)
-  //     assert.equal(fundManagerTotalCut.toNumber(), expectedFundManagerCut)
-  //   }
-  //
-  //   it('should calculate fund manager and platform cut correctly', async function() {
-  //     await deployContracts(1500)
-  //     await fundManagerTest()
-  //   })
-  //
-  //   it('should calculate fund manager and platform cut correctly when not set', async function() {
-  //     await deployContracts(0)
-  //     await fundManagerTest(0)
-  //   })
-  //
-  //   it('should calculate fund manager and platform cut correctly when no platform fee', async function() {
-  //     await deployContracts(1500)
-  //     await fundManagerTest(15)
-  //   })
-  //
-  //   it('should calculate fund manager and platform cut correctly when no success fee', async function() {
-  //     await deployContracts(0)
-  //     await fundManagerTest(0)
-  //   })
-  //
-  //   it('should be able to withdraw fund manager profits', async function() {
-  //     await deployContracts(2000)
-  //     await fundManagerTest(20)
-  //
-  //     await smartFundETH.fundManagerWithdraw({ from: userOne })
-  //
-  //     const {
-  //       fundManagerRemainingCut,
-  //       fundValue,
-  //       fundManagerTotalCut,
-  //     } = await smartFundETH.calculateFundManagerCut()
-  //
-  //     assert.equal(fundValue, 180)
-  //     assert.equal(fundManagerRemainingCut, 0)
-  //     assert.equal(fundManagerTotalCut, 20)
-  //   })
-  // })
-  //
-  // describe('Min return', function() {
-  //   it('Not allow execude transaction trade if for some reason DEX not sent min return asset', async function() {
-  //     // deploy smartFund with 10% success fee
-  //     await deployContracts(1000)
-  //     // disable transfer in DEX
-  //     await exchangePortal.changeStopTransferStatus(true)
-  //     // give exchange portal contract some money
-  //     await xxxERC.transfer(exchangePortal.address, toWei(String(10)))
-  //
-  //     // deposit in fund
-  //     await smartFundETH.deposit({ from: userOne, value: toWei(String(1)) })
-  //
-  //     // get proof and position for dest token
-  //     const proofXXX = MerkleTREE.getProof(keccak256(xxxERC.address)).map(x => buf2hex(x.data))
-  //     const positionXXX = MerkleTREE.getProof(keccak256(xxxERC.address)).map(x => x.position === 'right' ? 1 : 0)
-  //
-  //     await smartFundETH.trade(
-  //       ETH_TOKEN_ADDRESS,
-  //       toWei(String(1)),
-  //       xxxERC.address,
-  //       0,
-  //       proofXXX,
-  //       positionXXX,
-  //       PARASWAP_MOCK_ADDITIONAL_PARAMS,
-  //       toWei(String(1)),
-  //       {
-  //         from: userOne,
-  //       }
-  //     ).should.be.rejectedWith(EVMRevert)
-  //   })
-  // })
-  //
+
+  describe('Min return', function() {
+    it('Not allow execude transaction trade if for some reason DEX not sent min return asset', async function() {
+      // deploy smartFund with 10% success fee
+      await deployContracts(1000)
+      // disable transfer in DEX
+      await exchangePortal.changeStopTransferStatus(true)
+      // give exchange portal contract some money
+      await xxxERC.transfer(exchangePortal.address, toWei(String(10)))
+
+      // deposit in fund
+      await smartFundETH.deposit({ from: userOne, value: toWei(String(1)) })
+
+      // get proof and position for dest token
+      const proofXXX = MerkleTREE.getProof(keccak256(xxxERC.address)).map(x => buf2hex(x.data))
+      const positionXXX = MerkleTREE.getProof(keccak256(xxxERC.address)).map(x => x.position === 'right' ? 1 : 0)
+
+      await smartFundETH.trade(
+        ETH_TOKEN_ADDRESS,
+        toWei(String(1)),
+        xxxERC.address,
+        0,
+        proofXXX,
+        positionXXX,
+        PARASWAP_MOCK_ADDITIONAL_PARAMS,
+        toWei(String(1)),
+        {
+          from: userOne,
+        }
+      ).should.be.rejectedWith(EVMRevert)
+    })
+  })
+
   // describe('Fund Manager profit cut with deposit/withdraw scenarios', function() {
   //   it('should accurately calculate shares when the manager makes a profit', async function() {
   //     // deploy smartFund with 10% success fee
