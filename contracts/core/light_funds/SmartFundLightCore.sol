@@ -202,16 +202,11 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
 
   // core function for calculate deposit and withdraw and managerWithdraw
   // return data from Oracle
-  function calculateFundValue() internal returns (uint256) {
-      require(msg.sender == latestOracleCaller, "SENDER SHOULD BE LATEST ORACLE CALLER");
-      // get result from latest Oracle request
-      (uint256 value) = fundValueOracle.getFundValueByID(latestOracleRequestID);
+  function calculateFundValue() public view returns (uint256) {
       // caller can update only in 5 minutes
       if(latestOracleCallOnTime + 5 minutes > now){
-        // reset latest Oracle Caller for protect from double call
-        latestOracleCaller = address(0);
         // return data
-        return value;
+        return fundValueOracle.getFundValueByID(latestOracleRequestID);
       }
       else{
         revert("ORACLE TIME EXPIRED");
@@ -270,6 +265,7 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
   function withdraw(uint256 _percentageWithdraw) external {
     require(totalShares != 0, "EMPTY_SHARES");
     require(_percentageWithdraw <= TOTAL_PERCENTAGE, "INCORRECT_PERCENT");
+    require(msg.sender == latestOracleCaller, "SENDER_SHOULD_BE_LATEST_ORACLE_CALLER");
 
     uint256 percentageWithdraw = (_percentageWithdraw == 0) ? TOTAL_PERCENTAGE : _percentageWithdraw;
 
@@ -282,6 +278,9 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
 
     // Withdraw the users share minus the fund manager's success fee
     (fundManagerCut, fundValue, ) = calculateFundManagerCut();
+
+    // reset latest Oracle Caller for protect from double call
+    latestOracleCaller = address(0);
 
     uint256 withdrawShares = numberOfWithdrawShares.mul(fundValue.sub(fundManagerCut)).div(fundValue);
 
@@ -461,7 +460,7 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
   * @return fundValue                  The funds current value
   * @return fundManagerTotalCut        The fund managers total cut of the profits until now
   */
-  function calculateFundManagerCut() internal returns (
+  function calculateFundManagerCut() public view returns (
     uint256 fundManagerRemainingCut, // fm's cut of the profits that has yet to be cashed out (in `depositToken`)
     uint256 fundValue, // total value of fund (in `depositToken`)
     uint256 fundManagerTotalCut // fm's total cut of the profits (in `depositToken`)
@@ -486,14 +485,41 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
     }
   }
 
+  // calculate the current value of an address's shares in the fund
+  function calculateAddressValue(address _address) public view returns (uint256) {
+    if (totalShares == 0)
+      return 0;
+
+    return calculateFundValue().mul(addressToShares[_address]).div(totalShares);
+  }
+
+  // calculate the net profit/loss for an address in this fund
+  function calculateAddressProfit(address _address) public view returns (int256) {
+    uint256 currentAddressValue = calculateAddressValue(_address);
+
+    return int256(currentAddressValue) - addressesNetDeposit[_address];
+  }
+
+  // return the funds profit in deposit token
+  // NOTE: Require Oracle call
+  function calculateFundProfit() public returns (int256) {
+    uint256 fundValue = calculateFundValue();
+
+    return int256(fundValue) + int256(totalWeiWithdrawn) - int256(totalWeiDeposited);
+  }
+
   /**
   * @dev Allows the fund manager to withdraw their cut of the funds profit
   */
   function fundManagerWithdraw() public onlyOwner {
+    require(msg.sender == latestOracleCaller, "SENDER_SHOULD_BE_LATEST_ORACLE_CALLER");
     uint256 fundManagerCut;
     uint256 fundValue;
 
     (fundManagerCut, fundValue, ) = calculateFundManagerCut();
+
+    // reset latest Oracle Caller for protect from double call
+    latestOracleCaller = address(0);
 
     uint256 platformCut = (platformFee == 0) ? 0 : fundManagerCut.mul(platformFee).div(TOTAL_PERCENTAGE);
 
