@@ -192,7 +192,7 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
   // allow update oracle price
   function updateFundValueFromOracle(address _oracleTokenAddress, uint256 _oracleFee) public {
     // allow call Oracle only after 10 block after latest call
-    require(block.number >= latestOracleCallOnBlock + 10, "NEED WAIT 10 BLOCKS");
+    require(now > latestOracleCallOnTime + 30 minutes, "NEED WAIT 30 minutes");
     // transfer oracle token from sender and approve to oracle portal
     _transferFromSenderAndApproveTo(IERC20(_oracleTokenAddress), _oracleFee, address(fundValueOracle));
     // call oracle
