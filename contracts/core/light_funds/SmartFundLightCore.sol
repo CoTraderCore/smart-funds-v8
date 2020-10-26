@@ -444,7 +444,7 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
 
     (fundManagerCut, fundValue, ) = calculateFundManagerCut();
 
-    uint256 fundValueBeforeDeposit = fundValue.sub(_amount).sub(fundManagerCut);
+    uint256 fundValueBeforeDeposit = fundValue.sub(fundManagerCut);
 
     if (fundValueBeforeDeposit == 0)
       return 0;

@@ -238,6 +238,13 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
   // })
 
   describe('Deposit', function() {
+    // update and provide data from Oracle
+    async function updateOracle(value, sender){
+      await Oracle.setMockValue(value)
+      await LINK.approve(smartFundETH.address, toWei(String(1)), {from: sender})
+      await smartFundETH.updateFundValueFromOracle(LINK.address, toWei(String(1)), {from: sender})
+    }
+
     it('should not be able to deposit 0 Ether', async function() {
       assert.equal(await smartFundETH.totalShares(), 0)
       // if total shares 0, no need call Oracle for deposit
@@ -249,10 +256,9 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       await smartFundETH.deposit({ from: userOne, value: 100 })
       assert.equal(await smartFundETH.addressToShares(userOne), toWei(String(1)))
 
-      // update Oracle data
-      await Oracle.setMockValue(100)
-      await LINK.approve(smartFundETH.address, toWei(String(1)), {from: userOne})
-      await smartFundETH.updateFundValueFromOracle(LINK.address, toWei(String(1)), {from: userOne})
+      assert.notEqual(await smartFundETH.totalShares(), 0)
+
+      await updateOracle(100, userOne)
 
       const fundValue = await smartFundETH.calculateFundValue()
       assert.equal(fundValue, 100)
@@ -260,22 +266,41 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
 
     it('should accurately calculate empty fund value', async function() {
       assert.equal((await smartFundETH.getAllTokenAddresses()).length, 1) // Ether is initial token
-      // update Oracle data
-      await Oracle.setMockValue(0)
-      await LINK.approve(smartFundETH.address, toWei(String(1)), {from: userOne})
-      await smartFundETH.updateFundValueFromOracle(LINK.address, toWei(String(1)), {from: userOne})
+      await updateOracle(0, userOne)
       assert.equal(await smartFundETH.calculateFundValue(), 0)
+    })
+
+    it('should require update from Oracle for deposit if total shares != 0', async function() {
+      assert.equal(await smartFundETH.totalShares(), 0)
+
+      await smartFundETH.deposit({ from: userOne, value: 100 })
+
+      await smartFundETH.deposit({ from: userOne, value: 100 })
+      .should.be.rejectedWith(EVMRevert)
+
+      await updateOracle(100, userOne)
+
+      await smartFundETH.deposit({ from: userOne, value: 100 })
     })
   })
 
   // describe('Profit', function() {
+  //   // update and provide data from Oracle
+  //   async function updateOracle(value, sender){
+  //     await Oracle.setMockValue(value)
+  //     await LINK.approve(smartFundETH.address, toWei(String(1)), {from: sender})
+  //     await smartFundETH.updateFundValueFromOracle(LINK.address, toWei(String(1)), {from: sender})
+  //   }
+  //
   //   it('should have zero profit before any deposits have been made', async function() {
-  //       assert.equal(await smartFundETH.calculateAddressProfit(userOne), 0)
-  //       assert.equal(await smartFundETH.calculateFundProfit(), 0)
+  //     await updateOracle(0, userOne)
+  //     assert.equal(await smartFundETH.calculateAddressProfit(userOne), 0)
+  //     assert.equal(await smartFundETH.calculateFundProfit(), 0)
   //   })
   //
   //   it('should have zero profit before any trades have been made', async function() {
   //       await smartFundETH.deposit({ from: userOne, value: 100 })
+  //       await updateOracle(100, userOne)
   //       assert.equal(await smartFundETH.calculateAddressProfit(userOne), 0)
   //       assert.equal(await smartFundETH.calculateFundProfit(), 0)
   //   })
@@ -302,6 +327,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
   //         from: userOne,
   //       })
   //
+  //       await updateOracle(100, userOne)
   //       // check that we still haven't made a profit
   //       assert.equal(await smartFundETH.calculateAddressProfit(userOne), 0)
   //       assert.equal(await smartFundETH.calculateFundProfit(), 0)
@@ -332,6 +358,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
   //
   //       // change the rate (making a profit)
   //       await exchangePortal.setRatio(1, 2)
+  //       await updateOracle(200, userOne)
   //
   //       // check that we have made a profit
   //       assert.equal(await smartFundETH.calculateAddressProfit(userOne), 100)
@@ -363,6 +390,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
   //
   //       // change the rate to make a loss (2 tokens is 1 ether)
   //       await exchangePortal.setRatio(2, 1)
+  //       await updateOracle(50, userOne)
   //
   //       // check that we made negatove profit
   //       assert.equal(await smartFundETH.calculateAddressProfit(userOne), -50)

@@ -20,3 +20,11 @@ if not work due JS memory issue try this command instead truffle test
 sudo node --max-old-space-size=4096 /usr/local/bin/truffle test
 
 ```
+
+
+```
+DEV Notes
+1) calculateDepositToShares not the same as in previous versions fund
+we not sub msg.value, because we get data from history Oracle not realtime balance
+
+```
