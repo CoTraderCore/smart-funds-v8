@@ -932,6 +932,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       // NOW TOTAL VALUE = 2 ETH (1 XXX * 2 = 2 ETH)
       await updateOracle(toWei(String(2)), userTwo)
 
+      // additional check
       assert.equal(fromWei(await smartFundETH.calculateFundValue()), 2)
 
       const {
@@ -988,78 +989,87 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       // User 2 not hold any XXX
       assert.equal(fromWei(await xxxERC.balanceOf(userTwo)), 0)
 
-
+      // Withdraw from user 2
       await smartFundETH.withdraw(0,{ from: userTwo })
-
       assert.equal(fromWei(await xxxERC.balanceOf(userTwo)), 0.5)
     })
 
-    // it('should accurately calculate shares when FM makes a loss then breaks even', async function() {
-    //   // deploy smartFund with 10% success fee
-    //   await deployContracts(1000)
-    //   // give exchange portal contract some money
-    //   await xxxERC.transfer(exchangePortal.address, toWei(String(10)))
-    //   await exchangePortal.pay({ from: userThree, value: toWei(String(3))})
-    //
-    //   // deposit in fund
-    //   await smartFundETH.deposit({ from: userTwo, value: toWei(String(1)) })
-    //
-    //   // get proof and position for dest token
-    //   const proofXXX = MerkleTREE.getProof(keccak256(xxxERC.address)).map(x => buf2hex(x.data))
-    //   const positionXXX = MerkleTREE.getProof(keccak256(xxxERC.address)).map(x => x.position === 'right' ? 1 : 0)
-    //
-    //   await smartFundETH.trade(
-    //     ETH_TOKEN_ADDRESS,
-    //     toWei(String(1)),
-    //     xxxERC.address,
-    //     0,
-    //     proofXXX,
-    //     positionXXX,
-    //     PARASWAP_MOCK_ADDITIONAL_PARAMS,
-    //     1,
-    //     {
-    //       from: userOne,
-    //     }
-    //   )
-    //
-    //   // 1 token is now worth 1/2 ether, the fund lost half its value
-    //   await exchangePortal.setRatio(2, 1)
-    //
-    //   // user3 deposits, should have 2/3 of shares now
-    //   await smartFundETH.deposit({ from: userThree, value: toWei(String(1)) })
-    //
-    //   assert.equal(await smartFundETH.addressToShares.call(userTwo), toWei(String(1)))
-    //   assert.equal(await smartFundETH.addressToShares.call(userThree), toWei(String(2)))
-    //
-    //   // 1 token is now worth 2 ether, funds value is 3 ether
-    //   await exchangePortal.setRatio(1, 2)
-    //
-    //   // get proof and position for dest token
-    //   const proofETH = MerkleTREE.getProof(keccak256(ETH_TOKEN_ADDRESS)).map(x => buf2hex(x.data))
-    //   const positionETH = MerkleTREE.getProof(keccak256(ETH_TOKEN_ADDRESS)).map(x => x.position === 'right' ? 1 : 0)
-    //
-    //   await smartFundETH.trade(
-    //     xxxERC.address,
-    //     toWei(String(1)),
-    //     ETH_TOKEN_ADDRESS,
-    //     0,
-    //     proofETH,
-    //     positionETH,
-    //     PARASWAP_MOCK_ADDITIONAL_PARAMS,
-    //     1,
-    //     {
-    //       from: userOne,
-    //     }
-    //   )
-    //
-    //   assert.equal(
-    //     await web3.eth.getBalance(smartFundETH.address),
-    //     toWei(String(3))
-    //   )
-    //
-    //   assert.equal(await smartFundETH.calculateAddressProfit(userTwo), 0)
-    //   assert.equal(await smartFundETH.calculateAddressProfit(userThree), toWei(String(1)))
-    // })
+    it('should accurately calculate shares when FM makes a loss then breaks even', async function() {
+      // deploy smartFund with 10% success fee
+      await deployContracts(1000)
+      // give exchange portal contract some money
+      await xxxERC.transfer(exchangePortal.address, toWei(String(10)))
+      await exchangePortal.pay({ from: userThree, value: toWei(String(3))})
+
+      // deposit in fund
+      await smartFundETH.deposit({ from: userTwo, value: toWei(String(1)) })
+
+      // get proof and position for dest token
+      const proofXXX = MerkleTREE.getProof(keccak256(xxxERC.address)).map(x => buf2hex(x.data))
+      const positionXXX = MerkleTREE.getProof(keccak256(xxxERC.address)).map(x => x.position === 'right' ? 1 : 0)
+
+      await smartFundETH.trade(
+        ETH_TOKEN_ADDRESS,
+        toWei(String(1)),
+        xxxERC.address,
+        0,
+        proofXXX,
+        positionXXX,
+        PARASWAP_MOCK_ADDITIONAL_PARAMS,
+        1,
+        {
+          from: userOne,
+        }
+      )
+
+      // 1 token is now worth 1/2 ether, the fund lost half its value
+      await exchangePortal.setRatio(2, 1)
+      // NOW TOTAL VALUE = 0.5 ETH
+      await updateOracle(toWei(String(0.5)), userThree)
+
+      // user3 deposits, should have 2/3 of shares now
+      await smartFundETH.deposit({ from: userThree, value: toWei(String(1)) })
+
+      assert.equal(await smartFundETH.addressToShares.call(userTwo), toWei(String(1)))
+      assert.equal(await smartFundETH.addressToShares.call(userThree), toWei(String(2)))
+
+      // 1 token is now worth 2 ether, funds value is 3 ether
+      await exchangePortal.setRatio(1, 2)
+      await advanceTimeAndBlock(duration.minutes(31))
+      // NOW TOTAL VALUE = 3 ETH
+      await updateOracle(toWei(String(3)), userThree)
+
+      // get proof and position for dest token
+      const proofETH = MerkleTREE.getProof(keccak256(ETH_TOKEN_ADDRESS)).map(x => buf2hex(x.data))
+      const positionETH = MerkleTREE.getProof(keccak256(ETH_TOKEN_ADDRESS)).map(x => x.position === 'right' ? 1 : 0)
+
+      await advanceTimeAndBlock(duration.minutes(6))
+      await smartFundETH.trade(
+        xxxERC.address,
+        toWei(String(1)),
+        ETH_TOKEN_ADDRESS,
+        0,
+        proofETH,
+        positionETH,
+        PARASWAP_MOCK_ADDITIONAL_PARAMS,
+        1,
+        {
+          from: userOne,
+        }
+      )
+
+      assert.equal(
+        await web3.eth.getBalance(smartFundETH.address),
+        toWei(String(3))
+      )
+
+      await advanceTimeAndBlock(duration.minutes(31))
+      // NOW TOTAL VALUE = 3 ETH
+      await updateOracle(toWei(String(3)), userThree)
+
+      assert.equal(await smartFundETH.calculateAddressProfit(userTwo), 0)
+      assert.equal(await smartFundETH.calculateAddressProfit(userThree), toWei(String(1)))
+    })
   })
   //
   //
