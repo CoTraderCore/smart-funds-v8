@@ -1019,8 +1019,10 @@ contract('smartFundERC20', function([userOne, userTwo, userThree]) {
         }
       )
 
-      // 1 token is now worth 1/2 ether, the fund lost half its value
+      // 1 token is now worth 1/2 DAI, the fund lost half its value
       await exchangePortal.setRatio(2, 1)
+      // NOW TOTAL VALUE = 0.5 DAI
+      await updateOracle(toWei(String(0.5)), userThree)
 
       // send some DAI to user3
       DAI.transfer(userThree, toWei(String(100)))
@@ -1031,13 +1033,17 @@ contract('smartFundERC20', function([userOne, userTwo, userThree]) {
       assert.equal(await smartFundERC20.addressToShares.call(userTwo), toWei(String(1)))
       assert.equal(await smartFundERC20.addressToShares.call(userThree), toWei(String(2)))
 
-      // 1 token is now worth 2 ether, funds value is 3 ether
+      // 1 token is now worth 2 DAI, funds value is 3 DAI
       await exchangePortal.setRatio(1, 2)
+      await advanceTimeAndBlock(duration.minutes(31))
+      // NOW TOTAL VALUE = 3 DAI
+      await updateOracle(toWei(String(3)), userThree)
 
       // get proof and position for dest token
       const proofDAI = MerkleTREE.getProof(keccak256(DAI.address)).map(x => buf2hex(x.data))
       const positionDAI = MerkleTREE.getProof(keccak256(DAI.address)).map(x => x.position === 'right' ? 1 : 0)
 
+      await advanceTimeAndBlock(duration.minutes(6))
       await smartFundERC20.trade(
         xxxERC.address,
         toWei(String(1)),
@@ -1056,6 +1062,10 @@ contract('smartFundERC20', function([userOne, userTwo, userThree]) {
         await DAI.balanceOf(smartFundERC20.address),
         toWei(String(3))
       )
+
+      await advanceTimeAndBlock(duration.minutes(31))
+      // NOW TOTAL VALUE = 3 DAI
+      await updateOracle(toWei(String(3)), userThree)
 
       assert.equal(await smartFundERC20.calculateAddressProfit(userTwo), 0)
       assert.equal(await smartFundERC20.calculateAddressProfit(userThree), toWei(String(1)))
