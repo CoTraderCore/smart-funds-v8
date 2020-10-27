@@ -925,7 +925,7 @@ contract('smartFundERC20', function([userOne, userTwo, userThree]) {
       await updateOracle(toWei(String(2)), userTwo)
 
       // additional check
-      assert.equal(fromWei(await smartFundETH.calculateFundValue()), 2)
+      assert.equal(fromWei(await smartFundERC20.calculateFundValue()), 2)
 
       const {
         fundManagerRemainingCut,
@@ -944,7 +944,7 @@ contract('smartFundERC20', function([userOne, userTwo, userThree]) {
       await smartFundERC20.deposit(toWei(String(1)), { from: userTwo })
 
       // User 2 should recieve more than 0.5 shares, because user 1 should pay manager profit
-      assert.isTrue(fromWei(await smartFundETH.addressToShares(userTwo)) > 0.5)
+      assert.isTrue(fromWei(await smartFundERC20.addressToShares(userTwo)) > 0.5)
 
       await advanceTimeAndBlock(duration.minutes(6))
       await smartFundERC20.trade(
@@ -1106,6 +1106,13 @@ contract('smartFundERC20', function([userOne, userTwo, userThree]) {
   })
 
   describe('Platform cut', function() {
+    // update and provide data from Oracle
+    async function updateOracle(value, sender){
+     await Oracle.setMockValue(value)
+     await LINK.approve(smartFundERC20.address, toWei(String(1)), {from: sender})
+     await smartFundERC20.updateFundValueFromOracle(LINK.address, toWei(String(1)), {from: sender})
+    }
+
     it('Platform can get 10% from ETH profit', async function() {
       // deploy smartFund with 10% success fee and platform fee
       await deployContracts(1000)
@@ -1141,6 +1148,8 @@ contract('smartFundERC20', function([userOne, userTwo, userThree]) {
 
       // 1 DAI now 1 ETH
       await exchangePortal.setRatio(1, 1)
+      // TOTAL fund value = 2 DAI now
+      await updateOracle(toWei(String(2)), userOne)
 
       assert.equal(await web3.eth.getBalance(smartFundERC20.address), toWei(String(2)))
       assert.equal(await smartFundERC20.calculateFundValue(), toWei(String(2)))
@@ -1148,7 +1157,7 @@ contract('smartFundERC20', function([userOne, userTwo, userThree]) {
       const totalWeiDeposited = await smartFundERC20.totalWeiDeposited()
       assert.equal(fromWei(totalWeiDeposited), 1)
 
-      // user1 now withdraws 190 ether, 90 of which are profit
+      // user1 now withdraws 1.9 DAI, 0.9 DAI of which are profit
       await smartFundERC20.withdraw(0, { from: userOne })
 
       const totalWeiWithdrawn = await smartFundERC20.totalWeiWithdrawn()
@@ -1213,10 +1222,15 @@ contract('smartFundERC20', function([userOne, userTwo, userThree]) {
 
       assert.equal(await DAI.balanceOf(smartFundERC20.address), 0)
 
+      // TOTAL fund value = 1 DAI
+      await updateOracle(toWei(String(1)), userOne)
       assert.equal(await smartFundERC20.calculateFundValue(), toWei(String(1)))
 
       // 1 token is now worth 2 DAI
       await exchangePortal.setRatio(1, 2)
+      await advanceTimeAndBlock(duration.minutes(31))
+      // TOTAL DAI value = 2 DAI now (1 XXX * 2)
+      await updateOracle(toWei(String(2)), userOne)
 
       assert.equal(await smartFundERC20.calculateFundValue(), toWei(String(2)))
 
@@ -1232,6 +1246,9 @@ contract('smartFundERC20', function([userOne, userTwo, userThree]) {
       const totalWeiWithdrawn = await smartFundERC20.totalWeiWithdrawn()
       assert.equal(fromWei(totalWeiWithdrawn), 1.9)
 
+      await advanceTimeAndBlock(duration.minutes(31))
+      // TOTAL DAI value = 0.1 DAI
+      await updateOracle(toWei(String(0.1)), userOne)
       assert.equal(await smartFundERC20.calculateFundValue(), toWei(String(0.1)))
 
       const {
@@ -1258,6 +1275,13 @@ contract('smartFundERC20', function([userOne, userTwo, userThree]) {
   })
 
   describe('ERC20 implementation', function() {
+    // update and provide data from Oracle
+    async function updateOracle(value, sender){
+     await Oracle.setMockValue(value)
+     await LINK.approve(smartFundERC20.address, toWei(String(1)), {from: sender})
+     await smartFundERC20.updateFundValueFromOracle(LINK.address, toWei(String(1)), {from: sender})
+    }
+    
     it('should be able to transfer shares to another user', async function() {
       // send some DAI to user two
       DAI.transfer(userTwo, 100)
