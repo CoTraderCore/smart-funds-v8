@@ -730,10 +730,12 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       assert.equal(await smartFundETH.calculateFundValue(), 100)
       await smartFundETH.deposit({ from: userTwo, value: 100 })
 
-      // withdraw from userOne
+      // check 
       await advanceTimeAndBlock(duration.minutes(31))
       await updateOracle(200, userOne)
       assert.equal(await smartFundETH.calculateFundValue(), 200)
+
+      // withdraw from userOne
       let sfBalance
       sfBalance = await web3.eth.getBalance(smartFundETH.address)
       assert.equal(sfBalance, 200)

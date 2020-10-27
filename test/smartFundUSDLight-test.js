@@ -245,8 +245,8 @@ contract('smartFundERC20', function([userOne, userTwo, userThree]) {
     // update and provide data from Oracle
     async function updateOracle(value, sender){
       await Oracle.setMockValue(value)
-      await LINK.approve(smartFundETH.address, toWei(String(1)), {from: sender})
-      await smartFundETH.updateFundValueFromOracle(LINK.address, toWei(String(1)), {from: sender})
+      await LINK.approve(smartFundERC20.address, toWei(String(1)), {from: sender})
+      await smartFundERC20.updateFundValueFromOracle(LINK.address, toWei(String(1)), {from: sender})
     }
 
     it('should not be able to deposit 0 USD', async function() {
@@ -261,7 +261,7 @@ contract('smartFundERC20', function([userOne, userTwo, userThree]) {
       await smartFundERC20.deposit(100, { from: userOne })
       assert.equal(await smartFundERC20.addressToShares(userOne), toWei(String(1)))
 
-      assert.notEqual(await smartFundETH.totalShares(), 0)
+      assert.notEqual(await smartFundERC20.totalShares(), 0)
 
       await updateOracle(100, userOne)
 
@@ -281,8 +281,8 @@ contract('smartFundERC20', function([userOne, userTwo, userThree]) {
     // update and provide data from Oracle
     async function updateOracle(value, sender){
       await Oracle.setMockValue(value)
-      await LINK.approve(smartFundETH.address, toWei(String(1)), {from: sender})
-      await smartFundETH.updateFundValueFromOracle(LINK.address, toWei(String(1)), {from: sender})
+      await LINK.approve(smartFundERC20.address, toWei(String(1)), {from: sender})
+      await smartFundERC20.updateFundValueFromOracle(LINK.address, toWei(String(1)), {from: sender})
     }
 
     it('should have zero profit before any deposits have been made', async function() {
@@ -668,7 +668,7 @@ contract('smartFundERC20', function([userOne, userTwo, userThree]) {
             from: userOne,
           }
         )
-        // update oracle 
+        // update oracle
         await advanceTimeAndBlock(duration.minutes(31))
         await updateOracle(toWei(String(2)), userOne)
 
@@ -694,6 +694,13 @@ contract('smartFundERC20', function([userOne, userTwo, userThree]) {
 
 
   describe('Withdraw', function() {
+   // update and provide data from Oracle
+   async function updateOracle(value, sender){
+     await Oracle.setMockValue(value)
+     await LINK.approve(smartFundERC20.address, toWei(String(1)), {from: sender})
+     await smartFundERC20.updateFundValueFromOracle(LINK.address, toWei(String(1)), {from: sender})
+   }
+
    it('should be able to withdraw all deposited funds', async function() {
       let totalShares = await smartFundERC20.totalShares()
       assert.equal(totalShares, 0)
@@ -705,6 +712,8 @@ contract('smartFundERC20', function([userOne, userTwo, userThree]) {
 
       totalShares = await smartFundERC20.totalShares()
       assert.equal(totalShares, toWei(String(1)))
+
+      await updateOracle(100, userOne)
 
       await smartFundERC20.withdraw(0, { from: userOne })
       assert.equal(await DAI.balanceOf(smartFundERC20.address), 0)
@@ -721,6 +730,8 @@ contract('smartFundERC20', function([userOne, userTwo, userThree]) {
 
       totalShares = await smartFundERC20.totalShares()
 
+      await updateOracle(100, userOne)
+
       await smartFundERC20.withdraw(5000, { from: userOne }) // 50.00%
 
       assert.equal(await smartFundERC20.totalShares(), totalShares / 2)
@@ -730,27 +741,35 @@ contract('smartFundERC20', function([userOne, userTwo, userThree]) {
       // send some DAI from userOne to userTwo
       await DAI.transfer(userTwo, 100, { from: userOne })
 
-      // deposit
+      // deposit from user 1
       await DAI.approve(smartFundERC20.address, 100, { from: userOne })
       await smartFundERC20.deposit(100, { from: userOne })
 
+      await updateOracle(100, userTwo)
+
       assert.equal(await smartFundERC20.calculateFundValue(), 100)
 
+      // deposit from user 2
       await DAI.approve(smartFundERC20.address, 100, { from: userTwo })
       await smartFundERC20.deposit(100, { from: userTwo })
 
+      // check
+      await advanceTimeAndBlock(duration.minutes(31))
+      await updateOracle(200, userOne)
       assert.equal(await smartFundERC20.calculateFundValue(), 200)
 
-      // withdraw
+      // withdraw from user 1
       let sfBalance
       sfBalance = await DAI.balanceOf(smartFundERC20.address)
       assert.equal(sfBalance, 200)
-
       await smartFundERC20.withdraw(0,{ from: userOne })
       sfBalance = await DAI.balanceOf(smartFundERC20.address)
 
       assert.equal(sfBalance, 100)
 
+      // withdraw from user 2
+      await advanceTimeAndBlock(duration.minutes(31))
+      await updateOracle(100, userTwo)
       await smartFundERC20.withdraw(0, { from: userTwo })
       sfBalance = await DAI.balanceOf(smartFundERC20.address)
       assert.equal(sfBalance, 0)
@@ -758,6 +777,13 @@ contract('smartFundERC20', function([userOne, userTwo, userThree]) {
   })
 
   describe('Fund Manager', function() {
+    // update and provide data from Oracle
+    async function updateOracle(value, sender){
+     await Oracle.setMockValue(value)
+     await LINK.approve(smartFundERC20.address, toWei(String(1)), {from: sender})
+     await smartFundERC20.updateFundValueFromOracle(LINK.address, toWei(String(1)), {from: sender})
+    }
+
     it('should calculate fund manager and platform cut when no profits', async function() {
       await deployContracts(1500)
       const {
