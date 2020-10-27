@@ -76,10 +76,10 @@ contract SmartFundERC20Light is SmartFundLightCore {
     require(IERC20(coreFundAsset).transferFrom(msg.sender, address(this), depositAmount),
     "TRANSFER_FROM_ISSUE");
 
-    totalWeiDeposited += depositAmount;
-
     // Calculate number of shares
     uint256 shares = calculateDepositToShares(depositAmount);
+
+    totalWeiDeposited += depositAmount;
 
     // reset latest Oracle Caller for protect from double call
     latestOracleCaller = address(0);

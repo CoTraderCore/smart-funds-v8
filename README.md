@@ -25,6 +25,20 @@ sudo node --max-old-space-size=4096 /usr/local/bin/truffle test
 ```
 DEV Notes
 1) calculateDepositToShares not the same as in previous versions fund
-we not sub msg.value, because we get data from history Oracle not realtime balance
+we not sub msg.value, because via Oracle we can't take into account msg.value in total fund value
+
+2) change order in deposit
+
+from this
+totalWeiDeposited += msg.value;
+uint256 shares = calculateDepositToShares(msg.value);
+
+to this
+uint256 shares = calculateDepositToShares(msg.value);
+totalWeiDeposited += msg.value;
+
+because via Oracle we can't take into account msg.value in total fund value
+
+
 
 ```

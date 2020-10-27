@@ -59,10 +59,10 @@ contract SmartFundETHLight is SmartFundLightCore {
     // Require that the amount sent is not 0
     require(msg.value != 0, "ZERO_DEPOSIT");
 
-    totalWeiDeposited += msg.value;
-
     // Calculate number of shares
     uint256 shares = calculateDepositToShares(msg.value);
+
+    totalWeiDeposited += msg.value;
 
     // reset latest Oracle Caller for protect from double call
     latestOracleCaller = address(0);
