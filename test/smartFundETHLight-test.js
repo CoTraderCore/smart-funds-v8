@@ -885,7 +885,195 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
   //   })
   // })
 
-  describe('Fund Manager profit cut with deposit/withdraw scenarios', function() {
+  // describe('Fund Manager profit cut with deposit/withdraw scenarios', function() {
+  //   // update and provide data from Oracle
+  //   async function updateOracle(value, sender){
+  //    await Oracle.setMockValue(value)
+  //    await LINK.approve(smartFundETH.address, toWei(String(1)), {from: sender})
+  //    await smartFundETH.updateFundValueFromOracle(LINK.address, toWei(String(1)), {from: sender})
+  //   }
+  //
+  //   it('should accurately calculate shares when the manager makes a profit', async function() {
+  //     // deploy smartFund with 10% success fee
+  //     await deployContracts(1000)
+  //     const fee = await smartFundETH.successFee()
+  //     assert.equal(fee, 1000)
+  //
+  //     // give exchange portal contract some money
+  //     await xxxERC.transfer(exchangePortal.address, toWei(String(10)))
+  //
+  //     // deposit in fund
+  //     await smartFundETH.deposit({ from: userOne, value: toWei(String(1)) })
+  //
+  //     // get proof and position for dest token
+  //     const proofXXX = MerkleTREE.getProof(keccak256(xxxERC.address)).map(x => buf2hex(x.data))
+  //     const positionXXX = MerkleTREE.getProof(keccak256(xxxERC.address)).map(x => x.position === 'right' ? 1 : 0)
+  //
+  //     // trade 1 ETH to XXX
+  //     await smartFundETH.trade(
+  //       ETH_TOKEN_ADDRESS,
+  //       toWei(String(1)),
+  //       xxxERC.address,
+  //       0,
+  //       proofXXX,
+  //       positionXXX,
+  //       PARASWAP_MOCK_ADDITIONAL_PARAMS,
+  //       1,
+  //       {
+  //         from: userOne,
+  //       }
+  //     )
+  //
+  //     // After trade recieved asset should be marked as CRYPTOCURRENCY
+  //     assert.equal(await tokensType.getType(xxxERC.address), TOKEN_KEY_CRYPTOCURRENCY)
+  //
+  //     // 1 token is now worth 2 ether, the fund managers cut is now 0.1 ether
+  //     await exchangePortal.setRatio(1, 2)
+  //     // NOW TOTAL VALUE = 2 ETH (1 XXX * 2 = 2 ETH)
+  //     await updateOracle(toWei(String(2)), userTwo)
+  //
+  //     // additional check
+  //     assert.equal(fromWei(await smartFundETH.calculateFundValue()), 2)
+  //
+  //     const {
+  //       fundManagerRemainingCut,
+  //       fundValue,
+  //       fundManagerTotalCut,
+  //     } = await smartFundETH.calculateFundManagerCut()
+  //
+  //     assert.equal(fundValue, toWei(String(2)))
+  //     assert.equal(fromWei(String(fundManagerRemainingCut)), 0.1)
+  //     assert.equal(fromWei(String(fundManagerTotalCut)), 0.1)
+  //
+  //     // Deposit from user 2
+  //     await smartFundETH.deposit({ from: userTwo, value: toWei(String(1)) })
+  //
+  //     // User 2 should recieve more than 0.5 shares, because user 1 should pay manager profit
+  //     assert.isTrue(fromWei(await smartFundETH.addressToShares(userTwo)) > 0.5)
+  //
+  //     // Trade 1 ETH to 0.5 XXX
+  //     await advanceTimeAndBlock(duration.minutes(6))
+  //     await smartFundETH.trade(
+  //       ETH_TOKEN_ADDRESS,
+  //       toWei(String(1)),
+  //       xxxERC.address,
+  //       0,
+  //       proofXXX,
+  //       positionXXX,
+  //       PARASWAP_MOCK_ADDITIONAL_PARAMS,
+  //       1,
+  //       {
+  //         from: userOne,
+  //       }
+  //     )
+  //
+  //     await advanceTimeAndBlock(duration.minutes(31))
+  //     // TOTAL VALUE NOW 3 ETH (1.5 XXX * 2 = 3 ETH)
+  //     await updateOracle(toWei(String(3)), userOne)
+  //
+  //     // balance before manager cut
+  //     assert.equal(fromWei(await xxxERC.balanceOf(smartFundETH.address)), 1.5)
+  //     assert.equal(fromWei(await web3.eth.getBalance(smartFundETH.address)), 0)
+  //
+  //     // Fund manager can cut 0.1 ETH (0.05 XXX)
+  //     await smartFundETH.fundManagerWithdraw()
+  //
+  //     // balance after manager cut
+  //     assert.equal(fromWei(await xxxERC.balanceOf(smartFundETH.address)), 1.45)
+  //     assert.equal(fromWei(await web3.eth.getBalance(smartFundETH.address)), 0)
+  //
+  //     await advanceTimeAndBlock(duration.minutes(31))
+  //     // TOTAL VALUE NOW 2.9 ETH (1.45 XXX * 2 = 2.9)
+  //     await updateOracle(toWei(String(2.9)), userTwo)
+  //
+  //     // User 2 not hold any XXX
+  //     assert.equal(fromWei(await xxxERC.balanceOf(userTwo)), 0)
+  //
+  //     // Withdraw from user 2
+  //     await smartFundETH.withdraw(0,{ from: userTwo })
+  //     assert.equal(fromWei(await xxxERC.balanceOf(userTwo)), 0.5)
+  //   })
+  //
+  //   it('should accurately calculate shares when FM makes a loss then breaks even', async function() {
+  //     // deploy smartFund with 10% success fee
+  //     await deployContracts(1000)
+  //     // give exchange portal contract some money
+  //     await xxxERC.transfer(exchangePortal.address, toWei(String(10)))
+  //     await exchangePortal.pay({ from: userThree, value: toWei(String(3))})
+  //
+  //     // deposit in fund
+  //     await smartFundETH.deposit({ from: userTwo, value: toWei(String(1)) })
+  //
+  //     // get proof and position for dest token
+  //     const proofXXX = MerkleTREE.getProof(keccak256(xxxERC.address)).map(x => buf2hex(x.data))
+  //     const positionXXX = MerkleTREE.getProof(keccak256(xxxERC.address)).map(x => x.position === 'right' ? 1 : 0)
+  //
+  //     await smartFundETH.trade(
+  //       ETH_TOKEN_ADDRESS,
+  //       toWei(String(1)),
+  //       xxxERC.address,
+  //       0,
+  //       proofXXX,
+  //       positionXXX,
+  //       PARASWAP_MOCK_ADDITIONAL_PARAMS,
+  //       1,
+  //       {
+  //         from: userOne,
+  //       }
+  //     )
+  //
+  //     // 1 token is now worth 1/2 ether, the fund lost half its value
+  //     await exchangePortal.setRatio(2, 1)
+  //     // NOW TOTAL VALUE = 0.5 ETH
+  //     await updateOracle(toWei(String(0.5)), userThree)
+  //
+  //     // user3 deposits, should have 2/3 of shares now
+  //     await smartFundETH.deposit({ from: userThree, value: toWei(String(1)) })
+  //
+  //     assert.equal(await smartFundETH.addressToShares.call(userTwo), toWei(String(1)))
+  //     assert.equal(await smartFundETH.addressToShares.call(userThree), toWei(String(2)))
+  //
+  //     // 1 token is now worth 2 ether, funds value is 3 ether
+  //     await exchangePortal.setRatio(1, 2)
+  //     await advanceTimeAndBlock(duration.minutes(31))
+  //     // NOW TOTAL VALUE = 3 ETH
+  //     await updateOracle(toWei(String(3)), userThree)
+  //
+  //     // get proof and position for dest token
+  //     const proofETH = MerkleTREE.getProof(keccak256(ETH_TOKEN_ADDRESS)).map(x => buf2hex(x.data))
+  //     const positionETH = MerkleTREE.getProof(keccak256(ETH_TOKEN_ADDRESS)).map(x => x.position === 'right' ? 1 : 0)
+  //
+  //     await advanceTimeAndBlock(duration.minutes(6))
+  //     await smartFundETH.trade(
+  //       xxxERC.address,
+  //       toWei(String(1)),
+  //       ETH_TOKEN_ADDRESS,
+  //       0,
+  //       proofETH,
+  //       positionETH,
+  //       PARASWAP_MOCK_ADDITIONAL_PARAMS,
+  //       1,
+  //       {
+  //         from: userOne,
+  //       }
+  //     )
+  //
+  //     assert.equal(
+  //       await web3.eth.getBalance(smartFundETH.address),
+  //       toWei(String(3))
+  //     )
+  //
+  //     await advanceTimeAndBlock(duration.minutes(31))
+  //     // NOW TOTAL VALUE = 3 ETH
+  //     await updateOracle(toWei(String(3)), userThree)
+  //
+  //     assert.equal(await smartFundETH.calculateAddressProfit(userTwo), 0)
+  //     assert.equal(await smartFundETH.calculateAddressProfit(userThree), toWei(String(1)))
+  //   })
+  // })
+  //
+  //
+  describe('Platform cut', function() {
     // update and provide data from Oracle
     async function updateOracle(value, sender){
      await Oracle.setMockValue(value)
@@ -893,116 +1081,17 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
      await smartFundETH.updateFundValueFromOracle(LINK.address, toWei(String(1)), {from: sender})
     }
 
-    it('should accurately calculate shares when the manager makes a profit', async function() {
-      // deploy smartFund with 10% success fee
+    it('Platform can get 10% from ETH profit', async function() {
+      // deploy smartFund with 10% success fee and platform fee
       await deployContracts(1000)
-      const fee = await smartFundETH.successFee()
-      assert.equal(fee, 1000)
-
       // give exchange portal contract some money
-      await xxxERC.transfer(exchangePortal.address, toWei(String(10)))
+      await xxxERC.transfer(exchangePortal.address, toWei(String(50)))
+      await exchangePortal.pay({ from: userOne, value: toWei(String(3))})
 
       // deposit in fund
       await smartFundETH.deposit({ from: userOne, value: toWei(String(1)) })
 
-      // get proof and position for dest token
-      const proofXXX = MerkleTREE.getProof(keccak256(xxxERC.address)).map(x => buf2hex(x.data))
-      const positionXXX = MerkleTREE.getProof(keccak256(xxxERC.address)).map(x => x.position === 'right' ? 1 : 0)
-
-      // trade 1 ETH to XXX
-      await smartFundETH.trade(
-        ETH_TOKEN_ADDRESS,
-        toWei(String(1)),
-        xxxERC.address,
-        0,
-        proofXXX,
-        positionXXX,
-        PARASWAP_MOCK_ADDITIONAL_PARAMS,
-        1,
-        {
-          from: userOne,
-        }
-      )
-
-      // After trade recieved asset should be marked as CRYPTOCURRENCY
-      assert.equal(await tokensType.getType(xxxERC.address), TOKEN_KEY_CRYPTOCURRENCY)
-
-      // 1 token is now worth 2 ether, the fund managers cut is now 0.1 ether
-      await exchangePortal.setRatio(1, 2)
-      // NOW TOTAL VALUE = 2 ETH (1 XXX * 2 = 2 ETH)
-      await updateOracle(toWei(String(2)), userTwo)
-
-      // additional check
-      assert.equal(fromWei(await smartFundETH.calculateFundValue()), 2)
-
-      const {
-        fundManagerRemainingCut,
-        fundValue,
-        fundManagerTotalCut,
-      } = await smartFundETH.calculateFundManagerCut()
-
-      assert.equal(fundValue, toWei(String(2)))
-      assert.equal(fromWei(String(fundManagerRemainingCut)), 0.1)
-      assert.equal(fromWei(String(fundManagerTotalCut)), 0.1)
-
-      // Deposit from user 2
-      await smartFundETH.deposit({ from: userTwo, value: toWei(String(1)) })
-
-      // User 2 should recieve more than 0.5 shares, because user 1 should pay manager profit
-      assert.isTrue(fromWei(await smartFundETH.addressToShares(userTwo)) > 0.5)
-
-      // Trade 1 ETH to 0.5 XXX
-      await advanceTimeAndBlock(duration.minutes(6))
-      await smartFundETH.trade(
-        ETH_TOKEN_ADDRESS,
-        toWei(String(1)),
-        xxxERC.address,
-        0,
-        proofXXX,
-        positionXXX,
-        PARASWAP_MOCK_ADDITIONAL_PARAMS,
-        1,
-        {
-          from: userOne,
-        }
-      )
-
-      await advanceTimeAndBlock(duration.minutes(31))
-      // TOTAL VALUE NOW 3 ETH (1.5 XXX * 2 = 3 ETH)
-      await updateOracle(toWei(String(3)), userOne)
-
-      // balance before manager cut
-      assert.equal(fromWei(await xxxERC.balanceOf(smartFundETH.address)), 1.5)
-      assert.equal(fromWei(await web3.eth.getBalance(smartFundETH.address)), 0)
-
-      // Fund manager can cut 0.1 ETH (0.05 XXX)
-      await smartFundETH.fundManagerWithdraw()
-
-      // balance after manager cut
-      assert.equal(fromWei(await xxxERC.balanceOf(smartFundETH.address)), 1.45)
-      assert.equal(fromWei(await web3.eth.getBalance(smartFundETH.address)), 0)
-
-      await advanceTimeAndBlock(duration.minutes(31))
-      // TOTAL VALUE NOW 2.9 ETH (1.45 XXX * 2 = 2.9)
-      await updateOracle(toWei(String(2.9)), userTwo)
-
-      // User 2 not hold any XXX
-      assert.equal(fromWei(await xxxERC.balanceOf(userTwo)), 0)
-
-      // Withdraw from user 2
-      await smartFundETH.withdraw(0,{ from: userTwo })
-      assert.equal(fromWei(await xxxERC.balanceOf(userTwo)), 0.5)
-    })
-
-    it('should accurately calculate shares when FM makes a loss then breaks even', async function() {
-      // deploy smartFund with 10% success fee
-      await deployContracts(1000)
-      // give exchange portal contract some money
-      await xxxERC.transfer(exchangePortal.address, toWei(String(10)))
-      await exchangePortal.pay({ from: userThree, value: toWei(String(3))})
-
-      // deposit in fund
-      await smartFundETH.deposit({ from: userTwo, value: toWei(String(1)) })
+      assert.equal(await web3.eth.getBalance(smartFundETH.address), toWei(String(1)))
 
       // get proof and position for dest token
       const proofXXX = MerkleTREE.getProof(keccak256(xxxERC.address)).map(x => buf2hex(x.data))
@@ -1018,26 +1107,18 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
         PARASWAP_MOCK_ADDITIONAL_PARAMS,
         1,
         {
-          from: userOne,
+          from: userOne
         }
       )
 
-      // 1 token is now worth 1/2 ether, the fund lost half its value
-      await exchangePortal.setRatio(2, 1)
-      // NOW TOTAL VALUE = 0.5 ETH
-      await updateOracle(toWei(String(0.5)), userThree)
+      assert.equal(await web3.eth.getBalance(smartFundETH.address), 0)
 
-      // user3 deposits, should have 2/3 of shares now
-      await smartFundETH.deposit({ from: userThree, value: toWei(String(1)) })
-
-      assert.equal(await smartFundETH.addressToShares.call(userTwo), toWei(String(1)))
-      assert.equal(await smartFundETH.addressToShares.call(userThree), toWei(String(2)))
-
-      // 1 token is now worth 2 ether, funds value is 3 ether
+      // 1 token is now worth 2 ether
       await exchangePortal.setRatio(1, 2)
-      await advanceTimeAndBlock(duration.minutes(31))
-      // NOW TOTAL VALUE = 3 ETH
-      await updateOracle(toWei(String(3)), userThree)
+      // TOTAL ETH value = 2 ETH now
+      await updateOracle(toWei(String(2)), userOne)
+
+      assert.equal(await smartFundETH.calculateFundValue(), toWei(String(2)))
 
       // get proof and position for dest token
       const proofETH = MerkleTREE.getProof(keccak256(ETH_TOKEN_ADDRESS)).map(x => buf2hex(x.data))
@@ -1058,190 +1139,125 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
         }
       )
 
-      assert.equal(
-        await web3.eth.getBalance(smartFundETH.address),
-        toWei(String(3))
-      )
+      assert.equal(await web3.eth.getBalance(smartFundETH.address), toWei(String(2)))
+
+      const totalWeiDeposited = await smartFundETH.totalWeiDeposited()
+      assert.equal(fromWei(totalWeiDeposited), 1)
 
       await advanceTimeAndBlock(duration.minutes(31))
-      // NOW TOTAL VALUE = 3 ETH
-      await updateOracle(toWei(String(3)), userThree)
+      // TOTAL ETH value = 2 ETH now
+      await updateOracle(toWei(String(2)), userOne)
+      // user1 now withdraws 1.9 ether, 0.9 of which are profit
+      await smartFundETH.withdraw(0, { from: userOne })
 
-      assert.equal(await smartFundETH.calculateAddressProfit(userTwo), 0)
-      assert.equal(await smartFundETH.calculateAddressProfit(userThree), toWei(String(1)))
+      await advanceTimeAndBlock(duration.minutes(31))
+      // TOTAL ETH value = 0.1 ETH now
+      await updateOracle(toWei(String(0.1)), userOne)
+
+      const totalWeiWithdrawn = await smartFundETH.totalWeiWithdrawn()
+      assert.equal(fromWei(totalWeiWithdrawn), 1.9)
+
+      assert.equal(await smartFundETH.calculateFundValue(), toWei(String(0.1)))
+
+      const {
+        fundManagerRemainingCut,
+        fundValue,
+        fundManagerTotalCut,
+      } =
+      await smartFundETH.calculateFundManagerCut()
+
+      assert.equal(fundValue, toWei(String(0.1)))
+      assert.equal(fundManagerRemainingCut, toWei(String(0.1)))
+      assert.equal(fundManagerTotalCut, toWei(String(0.1)))
+
+      // // FM now withdraws their profit
+      await smartFundETH.fundManagerWithdraw({ from: userOne })
+
+      // Platform get 10%
+      assert.equal(fromWei(await web3.eth.getBalance(COT_DAO_WALLET.address)), 0.01)
+
+      // Fund transfer all balance
+      assert.equal(fromWei(await web3.eth.getBalance(smartFundETH.address)), 0)
     })
+
+    // it('Platform can get 10% from ERC profit', async function() {
+    //   // deploy smartFund with 10% success fee and platform fee
+    //   await deployContracts(1000)
+    //   // give exchange portal contract some money
+    //   await xxxERC.transfer(exchangePortal.address, toWei(String(50)))
+    //   await exchangePortal.pay({ from: userOne, value: toWei(String(3))})
+    //
+    //   // deposit in fund
+    //   await smartFundETH.deposit({ from: userOne, value: toWei(String(1)) })
+    //
+    //   assert.equal(await web3.eth.getBalance(smartFundETH.address), toWei(String(1)))
+    //
+    //   // 1 token is now cost 1 ether
+    //   await exchangePortal.setRatio(1, 1)
+    //
+    //   // get proof and position for dest token
+    //   const proofXXX = MerkleTREE.getProof(keccak256(xxxERC.address)).map(x => buf2hex(x.data))
+    //   const positionXXX = MerkleTREE.getProof(keccak256(xxxERC.address)).map(x => x.position === 'right' ? 1 : 0)
+    //
+    //   await smartFundETH.trade(
+    //     ETH_TOKEN_ADDRESS,
+    //     toWei(String(1)),
+    //     xxxERC.address,
+    //     0,
+    //     proofXXX,
+    //     positionXXX,
+    //     PARASWAP_MOCK_ADDITIONAL_PARAMS,
+    //     1,
+    //     {
+    //       from: userOne
+    //     }
+    //   )
+    //
+    //   assert.equal(await web3.eth.getBalance(smartFundETH.address), 0)
+    //
+    //   assert.equal(await smartFundETH.calculateFundValue(), toWei(String(1)))
+    //
+    //   // 1 token is now worth 2 ether
+    //   await exchangePortal.setRatio(1, 2)
+    //
+    //   assert.equal(await smartFundETH.calculateFundValue(), toWei(String(2)))
+    //
+    //   assert.equal(await web3.eth.getBalance(smartFundETH.address), toWei(String(0)))
+    //   assert.equal(await xxxERC.balanceOf(smartFundETH.address), toWei(String(1)))
+    //
+    //   const totalWeiDeposited = await smartFundETH.totalWeiDeposited()
+    //   assert.equal(fromWei(totalWeiDeposited), 1)
+    //
+    //   // user1 now withdraws 190 ether, 90 of which are profit
+    //   await smartFundETH.withdraw(0, { from: userOne })
+    //
+    //   const totalWeiWithdrawn = await smartFundETH.totalWeiWithdrawn()
+    //   assert.equal(fromWei(totalWeiWithdrawn), 1.9)
+    //
+    //   assert.equal(await smartFundETH.calculateFundValue(), toWei(String(0.1)))
+    //
+    //   const {
+    //     fundManagerRemainingCut,
+    //     fundValue,
+    //     fundManagerTotalCut,
+    //   } =
+    //   await smartFundETH.calculateFundManagerCut()
+    //
+    //   assert.equal(fundValue, toWei(String(0.1)))
+    //   assert.equal(fundManagerRemainingCut, toWei(String(0.1)))
+    //   assert.equal(fundManagerTotalCut, toWei(String(0.1)))
+    //
+    //   // // FM now withdraws their profit
+    //   await smartFundETH.fundManagerWithdraw({ from: userOne })
+    //
+    //   // Platform get 10%
+    //   // 0.005 xxx = 0.01 ETH
+    //   assert.equal(fromWei(await xxxERC.balanceOf(COT_DAO_WALLET.address)), 0.005)
+    //
+    //   // Fund transfer all balance
+    //   assert.equal(fromWei(await xxxERC.balanceOf(smartFundETH.address)), 0)
+    // })
   })
-  //
-  //
-  // describe('Platform cut', function() {
-  //   it('Platform can get 10% from ETH profit', async function() {
-  //     // deploy smartFund with 10% success fee and platform fee
-  //     await deployContracts(1000)
-  //     // give exchange portal contract some money
-  //     await xxxERC.transfer(exchangePortal.address, toWei(String(50)))
-  //     await exchangePortal.pay({ from: userOne, value: toWei(String(3))})
-  //
-  //     // deposit in fund
-  //     await smartFundETH.deposit({ from: userOne, value: toWei(String(1)) })
-  //
-  //     assert.equal(await web3.eth.getBalance(smartFundETH.address), toWei(String(1)))
-  //
-  //     // get proof and position for dest token
-  //     const proofXXX = MerkleTREE.getProof(keccak256(xxxERC.address)).map(x => buf2hex(x.data))
-  //     const positionXXX = MerkleTREE.getProof(keccak256(xxxERC.address)).map(x => x.position === 'right' ? 1 : 0)
-  //
-  //     await smartFundETH.trade(
-  //       ETH_TOKEN_ADDRESS,
-  //       toWei(String(1)),
-  //       xxxERC.address,
-  //       0,
-  //       proofXXX,
-  //       positionXXX,
-  //       PARASWAP_MOCK_ADDITIONAL_PARAMS,
-  //       1,
-  //       {
-  //         from: userOne
-  //       }
-  //     )
-  //
-  //     assert.equal(await web3.eth.getBalance(smartFundETH.address), 0)
-  //
-  //     // 1 token is now worth 2 ether
-  //     await exchangePortal.setRatio(1, 2)
-  //
-  //     assert.equal(await smartFundETH.calculateFundValue(), toWei(String(2)))
-  //
-  //     // get proof and position for dest token
-  //     const proofETH = MerkleTREE.getProof(keccak256(ETH_TOKEN_ADDRESS)).map(x => buf2hex(x.data))
-  //     const positionETH = MerkleTREE.getProof(keccak256(ETH_TOKEN_ADDRESS)).map(x => x.position === 'right' ? 1 : 0)
-  //
-  //     // should receive 200 'ether' (wei)
-  //     await smartFundETH.trade(
-  //       xxxERC.address,
-  //       toWei(String(1)),
-  //       ETH_TOKEN_ADDRESS,
-  //       0,
-  //       proofETH,
-  //       positionETH,
-  //       PARASWAP_MOCK_ADDITIONAL_PARAMS,
-  //       1,
-  //       {
-  //         from: userOne,
-  //       }
-  //     )
-  //
-  //     assert.equal(await web3.eth.getBalance(smartFundETH.address), toWei(String(2)))
-  //
-  //     const totalWeiDeposited = await smartFundETH.totalWeiDeposited()
-  //     assert.equal(fromWei(totalWeiDeposited), 1)
-  //
-  //     // user1 now withdraws 190 ether, 90 of which are profit
-  //     await smartFundETH.withdraw(0, { from: userOne })
-  //
-  //     const totalWeiWithdrawn = await smartFundETH.totalWeiWithdrawn()
-  //     assert.equal(fromWei(totalWeiWithdrawn), 1.9)
-  //
-  //     assert.equal(await smartFundETH.calculateFundValue(), toWei(String(0.1)))
-  //
-  //     const {
-  //       fundManagerRemainingCut,
-  //       fundValue,
-  //       fundManagerTotalCut,
-  //     } =
-  //     await smartFundETH.calculateFundManagerCut()
-  //
-  //     assert.equal(fundValue, toWei(String(0.1)))
-  //     assert.equal(fundManagerRemainingCut, toWei(String(0.1)))
-  //     assert.equal(fundManagerTotalCut, toWei(String(0.1)))
-  //
-  //     // // FM now withdraws their profit
-  //     await smartFundETH.fundManagerWithdraw({ from: userOne })
-  //
-  //     // Platform get 10%
-  //     assert.equal(fromWei(await web3.eth.getBalance(COT_DAO_WALLET.address)), 0.01)
-  //
-  //     // Fund transfer all balance
-  //     assert.equal(fromWei(await web3.eth.getBalance(smartFundETH.address)), 0)
-  //   })
-  //
-  //   it('Platform can get 10% from ERC profit', async function() {
-  //     // deploy smartFund with 10% success fee and platform fee
-  //     await deployContracts(1000)
-  //     // give exchange portal contract some money
-  //     await xxxERC.transfer(exchangePortal.address, toWei(String(50)))
-  //     await exchangePortal.pay({ from: userOne, value: toWei(String(3))})
-  //
-  //     // deposit in fund
-  //     await smartFundETH.deposit({ from: userOne, value: toWei(String(1)) })
-  //
-  //     assert.equal(await web3.eth.getBalance(smartFundETH.address), toWei(String(1)))
-  //
-  //     // 1 token is now cost 1 ether
-  //     await exchangePortal.setRatio(1, 1)
-  //
-  //     // get proof and position for dest token
-  //     const proofXXX = MerkleTREE.getProof(keccak256(xxxERC.address)).map(x => buf2hex(x.data))
-  //     const positionXXX = MerkleTREE.getProof(keccak256(xxxERC.address)).map(x => x.position === 'right' ? 1 : 0)
-  //
-  //     await smartFundETH.trade(
-  //       ETH_TOKEN_ADDRESS,
-  //       toWei(String(1)),
-  //       xxxERC.address,
-  //       0,
-  //       proofXXX,
-  //       positionXXX,
-  //       PARASWAP_MOCK_ADDITIONAL_PARAMS,
-  //       1,
-  //       {
-  //         from: userOne
-  //       }
-  //     )
-  //
-  //     assert.equal(await web3.eth.getBalance(smartFundETH.address), 0)
-  //
-  //     assert.equal(await smartFundETH.calculateFundValue(), toWei(String(1)))
-  //
-  //     // 1 token is now worth 2 ether
-  //     await exchangePortal.setRatio(1, 2)
-  //
-  //     assert.equal(await smartFundETH.calculateFundValue(), toWei(String(2)))
-  //
-  //     assert.equal(await web3.eth.getBalance(smartFundETH.address), toWei(String(0)))
-  //     assert.equal(await xxxERC.balanceOf(smartFundETH.address), toWei(String(1)))
-  //
-  //     const totalWeiDeposited = await smartFundETH.totalWeiDeposited()
-  //     assert.equal(fromWei(totalWeiDeposited), 1)
-  //
-  //     // user1 now withdraws 190 ether, 90 of which are profit
-  //     await smartFundETH.withdraw(0, { from: userOne })
-  //
-  //     const totalWeiWithdrawn = await smartFundETH.totalWeiWithdrawn()
-  //     assert.equal(fromWei(totalWeiWithdrawn), 1.9)
-  //
-  //     assert.equal(await smartFundETH.calculateFundValue(), toWei(String(0.1)))
-  //
-  //     const {
-  //       fundManagerRemainingCut,
-  //       fundValue,
-  //       fundManagerTotalCut,
-  //     } =
-  //     await smartFundETH.calculateFundManagerCut()
-  //
-  //     assert.equal(fundValue, toWei(String(0.1)))
-  //     assert.equal(fundManagerRemainingCut, toWei(String(0.1)))
-  //     assert.equal(fundManagerTotalCut, toWei(String(0.1)))
-  //
-  //     // // FM now withdraws their profit
-  //     await smartFundETH.fundManagerWithdraw({ from: userOne })
-  //
-  //     // Platform get 10%
-  //     // 0.005 xxx = 0.01 ETH
-  //     assert.equal(fromWei(await xxxERC.balanceOf(COT_DAO_WALLET.address)), 0.005)
-  //
-  //     // Fund transfer all balance
-  //     assert.equal(fromWei(await xxxERC.balanceOf(smartFundETH.address)), 0)
-  //   })
-  // })
   //
   // describe('ERC20 implementation', function() {
   //   it('should be able to transfer shares to another user', async function() {
