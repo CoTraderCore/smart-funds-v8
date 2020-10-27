@@ -485,7 +485,7 @@ contract('smartFundERC20', function([userOne, userTwo, userThree]) {
 
         // update freeze time
         await advanceTimeAndBlock(duration.minutes(6))
-        
+
         // should receive 200 'DAI' (wei)
         await smartFundERC20.trade(
           xxxERC.address,
@@ -508,7 +508,10 @@ contract('smartFundERC20', function([userOne, userTwo, userThree]) {
         const totalWeiDeposited = await smartFundERC20.totalWeiDeposited()
         assert.equal(fromWei(totalWeiDeposited), 1)
 
-        // user1 now withdraws 190 DAI, 90 of which are profit
+        await advanceTimeAndBlock(duration.minutes(31))
+        await updateOracle(toWei(String(2)), userOne)
+
+        // user1 now withdraws 1.9 DAI, 0.9 of which are profit
         await smartFundERC20.withdraw(0, { from: userOne })
 
         const totalWeiWithdrawn = await smartFundERC20.totalWeiWithdrawn()
@@ -517,6 +520,9 @@ contract('smartFundERC20', function([userOne, userTwo, userThree]) {
 
         const fB = await DAI.balanceOf(smartFundERC20.address)
         assert.equal(fromWei(fB), 0.1)
+
+        await advanceTimeAndBlock(duration.minutes(31))
+        await updateOracle(toWei(String(0.1)), userOne)
 
         assert.equal(await smartFundERC20.calculateFundValue(), toWei(String(0.1)))
 
@@ -542,6 +548,7 @@ contract('smartFundERC20', function([userOne, userTwo, userThree]) {
         await xxxERC.transfer(exchangePortal.address, toWei(String(50)))
         await DAI.transfer(exchangePortal.address, toWei(String(50)))
         await exchangePortal.pay({ from: userOne, value: toWei(String(5)) })
+
         // deposit in fund
         await DAI.approve(smartFundERC20.address, toWei(String(1)), { from: userOne })
         await smartFundERC20.deposit(toWei(String(1)), { from: userOne })
@@ -568,14 +575,19 @@ contract('smartFundERC20', function([userOne, userTwo, userThree]) {
 
         assert.equal(await DAI.balanceOf(smartFundERC20.address), 0)
 
-        // 1 token is now worth 2 ether
+        // 1 token is now worth 2 DAI
         await exchangePortal.setRatio(1, 2)
+
+        await updateOracle(toWei(String(2)), userOne)
 
         assert.equal(await smartFundERC20.calculateFundValue(), toWei(String(2)))
 
         // get proof and position for dest token
         const proofDAI = MerkleTREE.getProof(keccak256(DAI.address)).map(x => buf2hex(x.data))
         const positionDAI = MerkleTREE.getProof(keccak256(DAI.address)).map(x => x.position === 'right' ? 1 : 0)
+
+        // update freeze time
+        await timeMachine.advanceTimeAndBlock(duration.minutes(6))
 
         // should receive 200 'ether' (wei)
         await smartFundERC20.trade(
@@ -593,9 +605,15 @@ contract('smartFundERC20', function([userOne, userTwo, userThree]) {
         )
 
         assert.equal(await DAI.balanceOf(smartFundERC20.address), toWei(String(2)))
+        // update oracle
+        await timeMachine.advanceTimeAndBlock(duration.minutes(31))
+        await updateOracle(toWei(String(2)), userOne)
 
         // user1 now withdraws 190 ether, 90 of which are profit
         await smartFundERC20.withdraw(0, { from: userOne })
+        // update oracle
+        await timeMachine.advanceTimeAndBlock(duration.minutes(31))
+        await updateOracle(toWei(String(0.1)), userOne)
 
         assert.equal(await smartFundERC20.calculateFundValue(), toWei(String(0.1)))
 
@@ -605,12 +623,19 @@ contract('smartFundERC20', function([userOne, userTwo, userThree]) {
 
         // provide user2 with some DAI
         await DAI.transfer(userTwo, toWei(String(1)), { from: userOne })
+        // update oracle
+        await timeMachine.advanceTimeAndBlock(duration.minutes(31))
+        await updateOracle(0, userOne)
+
         // now user2 deposits into the fund
         await DAI.approve(smartFundERC20.address, toWei(String(1)), { from: userTwo })
         await smartFundERC20.deposit(toWei(String(1)), { from: userTwo })
 
         // 1 token is now worth 1 ether
         await exchangePortal.setRatio(1, 1)
+
+        // update freeze time
+        await advanceTimeAndBlock(duration.minutes(6))
 
         await smartFundERC20.trade(
           DAI.address,
@@ -643,6 +668,9 @@ contract('smartFundERC20', function([userOne, userTwo, userThree]) {
             from: userOne,
           }
         )
+        // update oracle 
+        await advanceTimeAndBlock(duration.minutes(31))
+        await updateOracle(toWei(String(2)), userOne)
 
         const {
           fundManagerRemainingCut,
