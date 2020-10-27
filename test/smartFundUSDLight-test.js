@@ -1281,7 +1281,7 @@ contract('smartFundERC20', function([userOne, userTwo, userThree]) {
      await LINK.approve(smartFundERC20.address, toWei(String(1)), {from: sender})
      await smartFundERC20.updateFundValueFromOracle(LINK.address, toWei(String(1)), {from: sender})
     }
-    
+
     it('should be able to transfer shares to another user', async function() {
       // send some DAI to user two
       DAI.transfer(userTwo, 100)
@@ -1303,12 +1303,20 @@ contract('smartFundERC20', function([userOne, userTwo, userThree]) {
       await smartFundERC20.deposit(100, { from: userTwo })
       await smartFundERC20.transfer(userThree, toWei(String(1)), { from: userTwo })
       assert.equal(await smartFundERC20.balanceOf(userThree), toWei(String(1)))
+      await updateOracle(100, userThree)
       await smartFundERC20.withdraw(0, { from: userThree })
       assert.equal(await smartFundERC20.balanceOf(userThree), 0)
     })
   })
 
   describe('Whitelist Investors', function() {
+    // update and provide data from Oracle
+    async function updateOracle(value, sender){
+     await Oracle.setMockValue(value)
+     await LINK.approve(smartFundERC20.address, toWei(String(1)), {from: sender})
+     await smartFundERC20.updateFundValueFromOracle(LINK.address, toWei(String(1)), {from: sender})
+    }
+
     it('should not allow anyone to deposit when whitelist is empty and set', async function() {
       // send some DAI to user two
       DAI.transfer(userTwo, 1000)
@@ -1336,6 +1344,8 @@ contract('smartFundERC20', function([userOne, userTwo, userThree]) {
 
       await smartFundERC20.setWhitelistAddress(userTwo, true)
 
+      await updateOracle(100, userTwo)
+
       await DAI.approve(smartFundERC20.address, 100, { from: userTwo })
       await smartFundERC20.deposit(100, { from: userTwo })
 
@@ -1343,6 +1353,8 @@ contract('smartFundERC20', function([userOne, userTwo, userThree]) {
       assert.equal(await smartFundERC20.addressToShares.call(userTwo), toWei(String(1)))
 
       await smartFundERC20.setWhitelistAddress(userOne, false)
+      await advanceTimeAndBlock(duration.minutes(31))
+      await updateOracle(200, userOne)
 
       await DAI.approve(smartFundERC20.address, 100, { from: userOne })
       await smartFundERC20.deposit(100, { from: userOne }).should.be.rejectedWith(EVMRevert)
