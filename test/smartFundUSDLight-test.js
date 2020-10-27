@@ -786,6 +786,8 @@ contract('smartFundERC20', function([userOne, userTwo, userThree]) {
 
     it('should calculate fund manager and platform cut when no profits', async function() {
       await deployContracts(1500)
+      await updateOracle(0, userOne)
+
       const {
         fundManagerRemainingCut,
         fundValue,
@@ -1157,13 +1159,20 @@ contract('smartFundERC20', function([userOne, userTwo, userThree]) {
       const totalWeiDeposited = await smartFundERC20.totalWeiDeposited()
       assert.equal(fromWei(totalWeiDeposited), 1)
 
+      assert.equal(fromWei(await web3.eth.getBalance(smartFundERC20.address)), 2)
+
       // user1 now withdraws 1.9 DAI, 0.9 DAI of which are profit
       await smartFundERC20.withdraw(0, { from: userOne })
 
       const totalWeiWithdrawn = await smartFundERC20.totalWeiWithdrawn()
       assert.equal(fromWei(totalWeiWithdrawn), 1.9)
 
+      await advanceTimeAndBlock(duration.minutes(31))
+      // TOTAL fund value = 0.1 DAI now
+      await updateOracle(toWei(String(0.1)), userOne)
+
       assert.equal(await smartFundERC20.calculateFundValue(), toWei(String(0.1)))
+      assert.equal(fromWei(await web3.eth.getBalance(smartFundERC20.address)), 0.1)
 
       const {
         fundManagerRemainingCut,
@@ -1223,8 +1232,8 @@ contract('smartFundERC20', function([userOne, userTwo, userThree]) {
       assert.equal(await DAI.balanceOf(smartFundERC20.address), 0)
 
       // TOTAL fund value = 1 DAI
-      await updateOracle(toWei(String(1)), userOne)
-      assert.equal(await smartFundERC20.calculateFundValue(), toWei(String(1)))
+      // await updateOracle(toWei(String(1)), userOne)
+      // assert.equal(await smartFundERC20.calculateFundValue(), toWei(String(1)))
 
       // 1 token is now worth 2 DAI
       await exchangePortal.setRatio(1, 2)
