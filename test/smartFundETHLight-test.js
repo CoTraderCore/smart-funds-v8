@@ -730,7 +730,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       assert.equal(await smartFundETH.calculateFundValue(), 100)
       await smartFundETH.deposit({ from: userTwo, value: 100 })
 
-      // check 
+      // check
       await advanceTimeAndBlock(duration.minutes(31))
       await updateOracle(200, userOne)
       assert.equal(await smartFundETH.calculateFundValue(), 200)

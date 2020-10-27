@@ -822,6 +822,8 @@ contract('smartFundERC20', function([userOne, userTwo, userThree]) {
       // increase price of bat. Ratio of 1/2 means 1 dai = 1/2 xxx
       await exchangePortal.setRatio(1, 2)
 
+      await updateOracle(200, userOne)
+
       // check profit and cuts are corrects
       const {
         fundManagerRemainingCut,
@@ -858,7 +860,13 @@ contract('smartFundERC20', function([userOne, userTwo, userThree]) {
       await deployContracts(2000)
       await fundManagerTest(20)
 
+      await advanceTimeAndBlock(duration.minutes(31))
+      await updateOracle(200, userOne)
+
       await smartFundERC20.fundManagerWithdraw({ from: userOne })
+
+      await advanceTimeAndBlock(duration.minutes(31))
+      await updateOracle(180, userOne)
 
       const {
         fundManagerRemainingCut,
@@ -873,6 +881,13 @@ contract('smartFundERC20', function([userOne, userTwo, userThree]) {
   })
 
   describe('Fund Manager profit cut with deposit/withdraw scenarios', function() {
+    // update and provide data from Oracle
+    async function updateOracle(value, sender){
+     await Oracle.setMockValue(value)
+     await LINK.approve(smartFundERC20.address, toWei(String(1)), {from: sender})
+     await smartFundERC20.updateFundValueFromOracle(LINK.address, toWei(String(1)), {from: sender})
+    }
+
     it('should accurately calculate shares when the manager makes a profit', async function() {
       // deploy smartFund with 10% success fee
       await deployContracts(1000)
@@ -904,8 +919,23 @@ contract('smartFundERC20', function([userOne, userTwo, userThree]) {
         }
       )
 
-      // 1 token is now worth 2 ether, the fund managers cut is now 0.1 ether
+      // 1 token is now worth 2 DAI, the fund managers cut is now 0.1 DAI
       await exchangePortal.setRatio(1, 2)
+      // NOW TOTAL VALUE = 2 ETH (1 XXX * 2 = 2 ETH)
+      await updateOracle(toWei(String(2)), userTwo)
+
+      // additional check
+      assert.equal(fromWei(await smartFundETH.calculateFundValue()), 2)
+
+      const {
+        fundManagerRemainingCut,
+        fundValue,
+        fundManagerTotalCut,
+      } = await smartFundERC20.calculateFundManagerCut()
+
+      assert.equal(fundValue, toWei(String(2)))
+      assert.equal(fromWei(String(fundManagerRemainingCut)), 0.1)
+      assert.equal(fromWei(String(fundManagerTotalCut)), 0.1)
 
       // send some DAI to user2
       DAI.transfer(userTwo, toWei(String(1)))
@@ -913,8 +943,10 @@ contract('smartFundERC20', function([userOne, userTwo, userThree]) {
       await DAI.approve(smartFundERC20.address, toWei(String(1)), { from: userTwo })
       await smartFundERC20.deposit(toWei(String(1)), { from: userTwo })
 
-      await exchangePortal.setRatio(1, 2)
+      // User 2 should recieve more than 0.5 shares, because user 1 should pay manager profit
+      assert.isTrue(fromWei(await smartFundETH.addressToShares(userTwo)) > 0.5)
 
+      await advanceTimeAndBlock(duration.minutes(6))
       await smartFundERC20.trade(
         DAI.address,
         toWei(String(1)),
@@ -929,13 +961,31 @@ contract('smartFundERC20', function([userOne, userTwo, userThree]) {
         }
       )
 
+      await advanceTimeAndBlock(duration.minutes(31))
+      // TOTAL VALUE NOW 3 DAI (1.5 XXX * 2 = 3 DAI)
+      await updateOracle(toWei(String(3)), userOne)
+
+      // balance before manager cut
+      assert.equal(fromWei(await xxxERC.balanceOf(smartFundERC20.address)), 1.5)
+      assert.equal(fromWei(await web3.eth.getBalance(smartFundERC20.address)), 0)
+
+      // Fund manager can cut 0.1 dai (0.05 XXX)
       await smartFundERC20.fundManagerWithdraw()
 
+      // balance after manager cut
+      assert.equal(fromWei(await xxxERC.balanceOf(smartFundERC20.address)), 1.45)
+      assert.equal(fromWei(await web3.eth.getBalance(smartFundERC20.address)), 0)
+
+      await advanceTimeAndBlock(duration.minutes(31))
+      // TOTAL VALUE NOW 2.9 ETH (1.45 XXX * 2 = 2.9)
+      await updateOracle(toWei(String(2.9)), userTwo)
+
+      // User 2 not hold any XXX
+      assert.equal(fromWei(await xxxERC.balanceOf(userTwo)), 0)
+
+      // Withdraw from user 2
       await smartFundERC20.withdraw(0, { from: userTwo })
-
-      const xxxUserTwo = await xxxERC.balanceOf(userTwo)
-
-      assert.equal(fromWei(xxxUserTwo), 0.5)
+      assert.equal(fromWei(await xxxERC.balanceOf(userTwo)), 0.5)
     })
 
     it('should accurately calculate shares when FM makes a loss then breaks even', async function() {
