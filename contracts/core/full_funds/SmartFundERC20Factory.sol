@@ -18,6 +18,7 @@ contract SmartFundERC20Factory {
     address _defiPortal,
     address _permittedAddresses,
     address _coinAddress,
+    address _fundValueOracle,
     bool    _isRequireTradeVerification
   )
   public
@@ -33,6 +34,7 @@ contract SmartFundERC20Factory {
       _defiPortal,
       _permittedAddresses,
       _coinAddress,
+      _fundValueOracle,
       _isRequireTradeVerification
     );
 

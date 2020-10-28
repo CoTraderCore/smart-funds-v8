@@ -17,6 +17,7 @@ contract SmartFundETHFactory {
     address _poolPortalAddress,
     address _defiPortal,
     address _permittedAddresses,
+    address _fundValueOracle,
     bool    _isRequireTradeVerification
   )
   public
@@ -31,6 +32,7 @@ contract SmartFundETHFactory {
       _poolPortalAddress,
       _defiPortal,
       _permittedAddresses,
+      _fundValueOracle,
       _isRequireTradeVerification
     );
 
