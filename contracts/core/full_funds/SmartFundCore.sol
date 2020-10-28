@@ -19,6 +19,7 @@ import "../interfaces/ExchangePortalInterface.sol";
 import "../interfaces/PoolPortalInterface.sol";
 import "../interfaces/DefiPortalInterface.sol";
 import "../interfaces/PermittedAddressesInterface.sol";
+import "../interfaces/IFundValueOracle.sol";
 
 import "../../zeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 import "../../zeppelin-solidity/contracts/access/Ownable.sol";
@@ -894,6 +895,19 @@ abstract contract SmartFundCore is Ownable, IERC20 {
   */
   function resetApprove(address _token, address _spender) external onlyOwner {
     IERC20(_token).approve(_spender, 0);
+  }
+
+  /**
+  * @dev Transfers tokens to this contract and approves them to another address
+  *
+  * @param _source          Token to transfer and approve
+  * @param _sourceAmount    The amount to transfer and approve (in _source token)
+  * @param _to              Address to approve to
+  */
+  function _transferFromSenderAndApproveTo(IERC20 _source, uint256 _sourceAmount, address _to) private {
+    require(_source.transferFrom(msg.sender, address(this), _sourceAmount), "CAN NOT TRANSFER FROM");
+    // approve
+    _source.approve(_to, _sourceAmount);
   }
 
   // Fallback payable function in order to be able to receive ether from other contracts
