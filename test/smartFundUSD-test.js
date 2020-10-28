@@ -1238,7 +1238,7 @@ contract('smartFundERC20', function([userOne, userTwo, userThree]) {
      await LINK.approve(smartFundERC20.address, toWei(String(1)), {from: sender})
      await smartFundERC20.updateFundValueFromOracle(LINK.address, toWei(String(1)), {from: sender})
     }
-    
+
     it('should be able buy/sell Bancor pool', async function() {
       // send some assets to pool portal
       await BNT.transfer(exchangePortal.address, toWei(String(1)))
