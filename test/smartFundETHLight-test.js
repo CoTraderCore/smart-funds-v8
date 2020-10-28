@@ -604,7 +604,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
         await timeMachine.advanceTimeAndBlock(duration.minutes(31))
         await updateOracle(toWei(String(2)), userOne)
 
-        // user1 now withdraws 190 ether, 90 of which are profit
+        // user1 now withdraws 1.9 ether, 0.9 of which are profit
         await smartFundETH.withdraw(0, { from: userOne })
 
         await timeMachine.advanceTimeAndBlock(duration.minutes(31))

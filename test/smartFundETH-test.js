@@ -586,7 +586,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
 
         // update freeze time
         await advanceTimeAndBlock(duration.minutes(6))
-        
+
         // should receive 200 'ether' (wei)
         await smartFundETH.trade(
           xxxERC.address,
@@ -607,11 +607,17 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
         const totalWeiDeposited = await smartFundETH.totalWeiDeposited()
         assert.equal(fromWei(totalWeiDeposited), 1)
 
+        await advanceTimeAndBlock(duration.minutes(31))
+        await updateOracle(toWei(String(2)), userOne)
+
         // user1 now withdraws 190 ether, 90 of which are profit
         await smartFundETH.withdraw(0, { from: userOne })
 
         const totalWeiWithdrawn = await smartFundETH.totalWeiWithdrawn()
         assert.equal(fromWei(totalWeiWithdrawn), 1.9)
+
+        await advanceTimeAndBlock(duration.minutes(31))
+        await updateOracle(toWei(String(0.1)), userOne)
 
         assert.equal(await smartFundETH.calculateFundValue(), toWei(String(0.1)))
 
@@ -664,6 +670,8 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
         // 1 token is now worth 2 ether
         await exchangePortal.setRatio(1, 2)
 
+        await updateOracle(toWei(String(2)), userOne)
+
         assert.equal(await smartFundETH.calculateFundValue(), toWei(String(2)))
 
         // get proof and position for dest token
@@ -687,8 +695,14 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
 
         assert.equal(await web3.eth.getBalance(smartFundETH.address), toWei(String(2)))
 
-        // user1 now withdraws 190 ether, 90 of which are profit
+        await timeMachine.advanceTimeAndBlock(duration.minutes(31))
+        await updateOracle(toWei(String(2)), userOne)
+
+        // user1 now withdraws 1.9 ether, 0.9 of which are profit
         await smartFundETH.withdraw(0, { from: userOne })
+
+        await timeMachine.advanceTimeAndBlock(duration.minutes(31))
+        await updateOracle(toWei(String(0.1)), userOne)
 
         assert.equal(await smartFundETH.calculateFundValue(), toWei(String(0.1)))
 
@@ -696,11 +710,17 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
         await smartFundETH.fundManagerWithdraw({ from: userOne })
         assert.equal(await web3.eth.getBalance(smartFundETH.address), 0)
 
+        await timeMachine.advanceTimeAndBlock(duration.minutes(31))
+        await updateOracle(0, userOne)
+
         // now user2 deposits into the fund
         await smartFundETH.deposit({ from: userTwo, value: toWei(String(1)) })
 
         // 1 token is now worth 1 ether
         await exchangePortal.setRatio(1, 1)
+
+        // update freeze time
+        await advanceTimeAndBlock(duration.minutes(6))
 
         await smartFundETH.trade(
           ETH_TOKEN_ADDRESS,
@@ -733,6 +753,9 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
             from: userOne,
           }
         )
+
+        await advanceTimeAndBlock(duration.minutes(31))
+        await updateOracle(toWei(String(2)), userOne)
 
         const {
           fundManagerRemainingCut,
