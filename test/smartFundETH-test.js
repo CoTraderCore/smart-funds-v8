@@ -778,12 +778,22 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
   })
 
   describe('Withdraw', function() {
+   // update and provide data from Oracle
+   async function updateOracle(value, sender){
+     await Oracle.setMockValue(value)
+     await LINK.approve(smartFundETH.address, toWei(String(1)), {from: sender})
+     await smartFundETH.updateFundValueFromOracle(LINK.address, toWei(String(1)), {from: sender})
+   }
+
    it('should be able to withdraw all deposited funds', async function() {
       const totalShares = await smartFundETH.totalShares()
       assert.equal(totalShares, 0)
 
       await smartFundETH.deposit({ from: userOne, value: 100 })
       assert.equal(await web3.eth.getBalance(smartFundETH.address), 100)
+
+      await updateOracle(100, userOne)
+
       await smartFundETH.withdraw(0, { from: userOne })
       assert.equal(await web3.eth.getBalance(smartFundETH.address), 0)
     })
@@ -798,6 +808,8 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
 
       totalShares = await smartFundETH.totalShares()
 
+      await updateOracle(100, userOne)
+
       await smartFundETH.withdraw(5000, { from: userOne }) // 50.00%
 
       assert.equal(await smartFundETH.totalShares(), totalShares / 2)
@@ -807,20 +819,28 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       // deposit
       await smartFundETH.deposit({ from: userOne, value: 100 })
 
+      await updateOracle(100, userTwo)
+
       assert.equal(await smartFundETH.calculateFundValue(), 100)
       await smartFundETH.deposit({ from: userTwo, value: 100 })
+
+      // check
+      await advanceTimeAndBlock(duration.minutes(31))
+      await updateOracle(200, userOne)
       assert.equal(await smartFundETH.calculateFundValue(), 200)
 
-      // withdraw
+      // withdraw from user 1
       let sfBalance
       sfBalance = await web3.eth.getBalance(smartFundETH.address)
       assert.equal(sfBalance, 200)
-
       await smartFundETH.withdraw(0, { from: userOne })
       sfBalance = await web3.eth.getBalance(smartFundETH.address)
 
       assert.equal(sfBalance, 100)
 
+      // withdraw from user 2
+      await advanceTimeAndBlock(duration.minutes(31))
+      await updateOracle(100, userTwo)
       await smartFundETH.withdraw(0, { from: userTwo })
       sfBalance = await web3.eth.getBalance(smartFundETH.address)
       assert.equal(sfBalance, 0)
@@ -828,8 +848,17 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
   })
 
   describe('Fund Manager', function() {
+    // update and provide data from Oracle
+    async function updateOracle(value, sender){
+     await Oracle.setMockValue(value)
+     await LINK.approve(smartFundETH.address, toWei(String(1)), {from: sender})
+     await smartFundETH.updateFundValueFromOracle(LINK.address, toWei(String(1)), {from: sender})
+    }
+
     it('should calculate fund manager and platform cut when no profits', async function() {
       await deployContracts(1500)
+      await updateOracle(0, userOne)
+
       const {
         fundManagerRemainingCut,
         fundValue,
@@ -865,6 +894,8 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
 
       // increase price of xxx. Ratio of 1/2 means 1 eth = 1/2 xxx
       await exchangePortal.setRatio(1, 2)
+
+      await updateOracle(200, userOne)
 
       // check profit and cuts are corrects
       const {
@@ -902,7 +933,13 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       await deployContracts(2000)
       await fundManagerTest(20)
 
+      await advanceTimeAndBlock(duration.minutes(31))
+      await updateOracle(200, userOne)
+
       await smartFundETH.fundManagerWithdraw({ from: userOne })
+
+      await advanceTimeAndBlock(duration.minutes(31))
+      await updateOracle(180, userOne)
 
       const {
         fundManagerRemainingCut,
