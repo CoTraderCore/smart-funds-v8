@@ -84,7 +84,7 @@ abstract contract SmartFundCore is Ownable, IERC20 {
   // addresses to be able to invest in their fund
   mapping (address => bool) public whitelist;
 
-  uint public version = 7;
+  uint public version = 8;
 
   // the total number of shares in the fund
   uint256 public totalShares = 0;
@@ -100,6 +100,15 @@ abstract contract SmartFundCore is Ownable, IERC20 {
 
   // If true the contract will require each new asset to buy to be on a special Merkle tree list
   bool public isRequireTradeVerification;
+
+  // Oracle contract instance
+  IFundValueOracle public fundValueOracle;
+
+  // Data for Oracle updates
+  bytes32 public latestOracleRequestID;
+  uint256 public latestOracleCallOnTime;
+  uint256 public latestOracleCallOnBlock;
+  address public latestOracleCaller;
 
   // how many shares belong to each address
   mapping (address => uint256) public addressToShares;
@@ -137,6 +146,24 @@ abstract contract SmartFundCore is Ownable, IERC20 {
   event Withdraw(address indexed user, uint256 sharesRemoved, uint256 totalShares);
   event Trade(address src, uint256 srcAmount, address dest, uint256 destReceived);
   event SmartFundCreated(address indexed owner);
+  event OracleUpdate(address caller, uint256 triggerTime, bytes32 id);
+
+  // freeze trade while user do deposit and withdraw (5 minutes)
+  modifier freezeTradeForDW {
+    require(
+        now > latestOracleCallOnTime + 5 minutes,
+        "FUND_REQUIRE_5_MINUTES_FREEZE_FOR_UPDATE_PRICE"
+     );
+    _;
+  }
+
+  // not allow call user B (for a 5 minutes) if user A not finished operation
+  // allow call any user for a first deposit
+  modifier verifyOracleSender {
+    if(totalShares > 0 && latestOracleCallOnTime + 5 minutes > now)
+      require(msg.sender == latestOracleCaller, "SENDER_SHOULD_BE_LATEST_ORACLE_CALLER");
+    _;
+  }
 
 
   constructor(
@@ -149,6 +176,7 @@ abstract contract SmartFundCore is Ownable, IERC20 {
     address _defiPortal,
     address _permittedAddresses,
     address _coreFundAsset,
+    address _fundValueOracle,
     bool    _isRequireTradeVerification
   )public{
     // never allow a 100% fee
@@ -156,7 +184,7 @@ abstract contract SmartFundCore is Ownable, IERC20 {
 
     name = _name;
     successFee = _successFee;
-    platformFee = _successFee; // platform fee the same as manager fee 
+    platformFee = _successFee; // platform fee the same as manager fee
 
     // Init manager
     if(_owner == address(0)){
@@ -186,16 +214,45 @@ abstract contract SmartFundCore is Ownable, IERC20 {
     // Initial core assets
     coreFundAsset = _coreFundAsset;
 
+    // Initial fund Oracle
+    fundValueOracle = IFundValueOracle(_fundValueOracle);
+
     // Initial check if fund require trade verification or not
     isRequireTradeVerification = _isRequireTradeVerification;
 
     emit SmartFundCreated(owner());
   }
 
-  // virtual methods
-  // USD and ETH based funds have different implements of this methods
-  function calculateFundValue() public virtual view returns (uint256);
-  function getTokenValue(IERC20 _token) public virtual view returns (uint256);
+  // allow update oracle price
+  function updateFundValueFromOracle(address _oracleTokenAddress, uint256 _oracleFee) public {
+    // allow call Oracle only after 10 block after latest call
+    require(now > latestOracleCallOnTime + 30 minutes, "NEED WAIT 30 minutes");
+    // transfer oracle token from sender and approve to oracle portal
+    _transferFromSenderAndApproveTo(IERC20(_oracleTokenAddress), _oracleFee, address(fundValueOracle));
+    // call oracle
+    latestOracleRequestID = fundValueOracle.requestValue(address(this));
+
+    // update data
+    latestOracleCallOnTime = now;
+    latestOracleCallOnBlock = block.number;
+    latestOracleCaller = msg.sender;
+
+    // emit events
+    emit OracleUpdate(latestOracleCaller, latestOracleCallOnTime, latestOracleRequestID);
+  }
+
+  // core function for calculate deposit and withdraw and managerWithdraw
+  // return data from Oracle
+  function calculateFundValue() public view returns (uint256) {
+      // caller can update only in 5 minutes
+      if(latestOracleCallOnTime + 5 minutes > now){
+        // return data
+        return fundValueOracle.getFundValueByID(latestOracleRequestID);
+      }
+      else{
+        revert("ORACLE TIME EXPIRED");
+      }
+  }
 
 
   /**
@@ -246,7 +303,7 @@ abstract contract SmartFundCore is Ownable, IERC20 {
   *
   * @param _percentageWithdraw    The percentage of the users shares to withdraw.
   */
-  function withdraw(uint256 _percentageWithdraw) external {
+  function withdraw(uint256 _percentageWithdraw) external verifyOracleSender {
     require(totalShares != 0, "EMPTY_SHARES");
     require(_percentageWithdraw <= TOTAL_PERCENTAGE, "INCORRECT_PERCENT");
 
@@ -261,6 +318,9 @@ abstract contract SmartFundCore is Ownable, IERC20 {
 
     // Withdraw the users share minus the fund manager's success fee
     (fundManagerCut, fundValue, ) = calculateFundManagerCut();
+
+    // reset latest Oracle Caller for protect from double call
+    latestOracleCaller = address(0);
 
     uint256 withdrawShares = numberOfWithdrawShares.mul(fundValue.sub(fundManagerCut)).div(fundValue);
 
@@ -311,7 +371,11 @@ abstract contract SmartFundCore is Ownable, IERC20 {
     uint256[] calldata _positions,
     bytes calldata _additionalData,
     uint256 _minReturn
-  ) external onlyOwner {
+  )
+   external
+   onlyOwner
+   freezeTradeForDW
+  {
     require(_minReturn > 0, "MIN_RETURN_0");
 
     uint256 receivedAmount;
@@ -379,7 +443,10 @@ abstract contract SmartFundCore is Ownable, IERC20 {
    bytes32[] calldata _additionalArgs,
    bytes calldata     _additionData
   )
-  external onlyOwner {
+   external
+   onlyOwner
+   freezeTradeForDW
+  {
    // for determine the exact number of received pool
    uint256 poolAmountReceive;
 
@@ -451,7 +518,10 @@ abstract contract SmartFundCore is Ownable, IERC20 {
     bytes32[] calldata _additionalArgs,
     bytes calldata _additionData
   )
-  external onlyOwner {
+   external
+   onlyOwner
+   freezeTradeForDW
+  {
     // approve pool
     _poolToken.approve(address(poolPortal), _amount);
 
@@ -496,6 +566,7 @@ abstract contract SmartFundCore is Ownable, IERC20 {
   )
     external
     onlyOwner
+    freezeTradeForDW
   {
     // event data
     string memory eventType;
@@ -689,7 +760,7 @@ abstract contract SmartFundCore is Ownable, IERC20 {
   /**
   * @dev Allows the fund manager to withdraw their cut of the funds profit
   */
-  function fundManagerWithdraw() public onlyOwner {
+  function fundManagerWithdraw() external verifyOracleSender onlyOwner {
     uint256 fundManagerCut;
     uint256 fundValue;
 
