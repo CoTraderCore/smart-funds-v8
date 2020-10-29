@@ -1942,6 +1942,25 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       assert.equal(await smartFundETH.fundValueOracle(), newOracleAddress)
     })
 
+    it('Fund manager can set new max tokens ', async function() {
+      assert.equal(await smartFundETH.MAX_TOKENS(), 20)
+      // should be rejected (not corerct amount)
+      await smartFundETH.set_MAX_TOKENS(await CoTraderConfig.MIN_MAX_TOKENS() - 1)
+      .should.be.rejectedWith(EVMRevert)
+
+      await smartFundETH.set_MAX_TOKENS(await CoTraderConfig.MAX_MAX_TOKENS() + 1)
+      .should.be.rejectedWith(EVMRevert)
+
+      // success
+      await smartFundETH.set_MAX_TOKENS(25)
+      assert.equal(await smartFundETH.MAX_TOKENS(), 25)
+    })
+
+    it('Not Fund manager can NOT set new max tokens ', async function() {
+      await smartFundETH.set_MAX_TOKENS(25, { from:userTwo })
+      .should.be.rejectedWith(EVMRevert)
+    })
+
     // it('TODO Test deposit after new changed time ', async function() {
     //
     // })
@@ -1951,10 +1970,6 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
     // })
 
     // it('TODO Test trade after new changed time ', async function() {
-    //
-    // })
-
-    // it('TODO fund manager can set new max tokens ', async function() {
     //
     // })
   })
