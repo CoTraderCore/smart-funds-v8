@@ -1907,7 +1907,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       assert.equal(await smartFundETH.totalShares(), toWei(String(2)))
     })
 
-    it('TODO Next user can not open  withdraw if prev user open withdraw procedure, but can if prev user not', async function() {
+    it('Next user can not open  withdraw if prev user open withdraw procedure, but can if prev user not', async function() {
       // first deposit (total shares 0) not require Oracle call
       await smartFundETH.deposit({ from: userOne, value: 100 })
       assert.equal(await smartFundETH.totalShares(), toWei(String(1)))
@@ -1934,19 +1934,23 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       assert.equal(await smartFundETH.totalShares(), toWei(String(1)))
     })
 
-    // it('TODO Test deposit after changed time ', async function() {
+    it('Manager can change Oracle address', async function() {
+      const newOracleAddress = '0x0000000000000000000000000000000000000000'
+      await permittedAddresses.addNewAddress(newOracleAddress, 5)
+      assert.equal(await smartFundETH.fundValueOracle(), Oracle.address)
+      await smartFundETH.setNewFundValueOracle(newOracleAddress)
+      assert.equal(await smartFundETH.fundValueOracle(), newOracleAddress)
+    })
+
+    // it('TODO Test deposit after new changed time ', async function() {
     //
     // })
     //
-    // it('TODO Test withdraw after changed time ', async function() {
+    // it('TODO Test withdraw after new changed time ', async function() {
     //
     // })
-    //
-    // it('TODO Manager can change Oracle address', async function() {
-    //
-    // })
-    //
-    // it('TODO Manager cant change value more then set in min max', async function() {
+
+    // it('TODO Test trade after new changed time ', async function() {
     //
     // })
 
