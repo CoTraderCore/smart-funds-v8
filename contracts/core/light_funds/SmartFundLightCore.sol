@@ -190,13 +190,24 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
   }
 
   // allow update oracle price
-  function updateFundValueFromOracle(address _oracleTokenAddress, uint256 _oracleFee) public {
+  function updateFundValueFromOracle(address _oracleTokenAddress, uint256 _oracleFee) public payable {
     // allow call Oracle only after 10 block after latest call
     require(now > latestOracleCallOnTime + 30 minutes, "NEED WAIT 30 minutes");
-    // transfer oracle token from sender and approve to oracle portal
-    _transferFromSenderAndApproveTo(IERC20(_oracleTokenAddress), _oracleFee, address(fundValueOracle));
-    // call oracle
-    latestOracleRequestID = fundValueOracle.requestValue(address(this));
+
+    // pay for using Oracle with ETH
+    if(_oracleTokenAddress == address(ETH_TOKEN_ADDRESS)){
+      require(msg.value == _oracleFee, "REQUIRE ETH");
+      // call oracle
+      latestOracleRequestID = fundValueOracle.requestValue.value(_oracleFee)(address(this));
+    }
+    // pay for using Oracle with ERC20
+    else{
+      require(msg.value == 0, "NO NEED ETH");
+      // transfer oracle token from sender and approve to oracle portal
+      _transferFromSenderAndApproveTo(IERC20(_oracleTokenAddress), _oracleFee, address(fundValueOracle));
+      // call oracle
+      latestOracleRequestID = fundValueOracle.requestValue(address(this));
+    }
 
     // update data
     latestOracleCallOnTime = now;
@@ -206,7 +217,6 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
     // emit events
     emit OracleUpdate(latestOracleCaller, latestOracleCallOnTime, latestOracleRequestID);
   }
-
 
   // core function for calculate deposit and withdraw and managerWithdraw
   // return data from Oracle
