@@ -20,6 +20,7 @@ import "../interfaces/PoolPortalInterface.sol";
 import "../interfaces/DefiPortalInterface.sol";
 import "../interfaces/PermittedAddressesInterface.sol";
 import "../interfaces/IFundValueOracle.sol";
+import "../interfaces/ICoTraderGlobalConfig.sol";
 
 import "../../zeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 import "../../zeppelin-solidity/contracts/access/Ownable.sol";
@@ -111,6 +112,9 @@ abstract contract SmartFundCore is Ownable, IERC20 {
   uint256 public latestOracleCallOnBlock;
   address public latestOracleCaller;
 
+  // CoTrader platform config
+  ICoTraderGlobalConfig public cotraderGlobalConfig;
+
   // how many shares belong to each address
   mapping (address => uint256) public addressToShares;
 
@@ -178,7 +182,8 @@ abstract contract SmartFundCore is Ownable, IERC20 {
     address _permittedAddresses,
     address _coreFundAsset,
     address _fundValueOracle,
-    bool    _isRequireTradeVerification
+    bool    _isRequireTradeVerification,
+    address _cotraderGlobalConfig
   )public{
     // never allow a 100% fee
     require(_successFee < TOTAL_PERCENTAGE);
@@ -220,6 +225,9 @@ abstract contract SmartFundCore is Ownable, IERC20 {
 
     // Initial check if fund require trade verification or not
     isRequireTradeVerification = _isRequireTradeVerification;
+
+    // Initial platform config
+    cotraderGlobalConfig = ICoTraderGlobalConfig(_cotraderGlobalConfig);
 
     emit SmartFundCreated(owner());
   }

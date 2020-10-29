@@ -23,6 +23,7 @@ contract SmartFundETH is SmartFundCore {
   * @param _permittedAddresses           Address of permittedAddresses contract
   * @param _fundValueOracle              Address of Oracle contract
   * @param _isRequireTradeVerification   If true fund will require verification from Merkle White list for each new asset
+  * @param _cotraderGlobalConfig         Address of CoTrader global config 
   */
   constructor(
     address _owner,
@@ -34,7 +35,8 @@ contract SmartFundETH is SmartFundCore {
     address _defiPortal,
     address _permittedAddresses,
     address _fundValueOracle,
-    bool    _isRequireTradeVerification
+    bool    _isRequireTradeVerification,
+    address _cotraderGlobalConfig
   )
   SmartFundCore(
     _owner,
@@ -47,7 +49,8 @@ contract SmartFundETH is SmartFundCore {
     _permittedAddresses,
     address(0x00eeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeeee),
     _fundValueOracle,
-    _isRequireTradeVerification
+    _isRequireTradeVerification,
+    _cotraderGlobalConfig
   )
   public{}
 

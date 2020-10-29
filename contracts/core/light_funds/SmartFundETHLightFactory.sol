@@ -16,7 +16,8 @@ contract SmartFundETHLightFactory {
     address _exchangePortalAddress,
     address _permittedAddresses,
     address _fundValueOracle,
-    bool    _isRequireTradeVerification
+    bool    _isRequireTradeVerification,
+    address _cotraderGlobalConfig
   )
   public
   returns(address)
@@ -29,7 +30,8 @@ contract SmartFundETHLightFactory {
       _exchangePortalAddress,
       _permittedAddresses,
       _fundValueOracle,
-      _isRequireTradeVerification
+      _isRequireTradeVerification,
+      _cotraderGlobalConfig
     );
 
     return address(smartFundETHLight);

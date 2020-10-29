@@ -19,7 +19,8 @@ contract SmartFundERC20Factory {
     address _permittedAddresses,
     address _coinAddress,
     address _fundValueOracle,
-    bool    _isRequireTradeVerification
+    bool    _isRequireTradeVerification,
+    address _cotraderGlobalConfig
   )
   public
   returns(address)
@@ -35,7 +36,8 @@ contract SmartFundERC20Factory {
       _permittedAddresses,
       _coinAddress,
       _fundValueOracle,
-      _isRequireTradeVerification
+      _isRequireTradeVerification,
+      _cotraderGlobalConfig
     );
 
     return address(smartFundERC20);
