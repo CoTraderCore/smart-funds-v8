@@ -23,7 +23,7 @@ contract SmartFundETH is SmartFundCore {
   * @param _permittedAddresses           Address of permittedAddresses contract
   * @param _fundValueOracle              Address of Oracle contract
   * @param _isRequireTradeVerification   If true fund will require verification from Merkle White list for each new asset
-  * @param _cotraderGlobalConfig         Address of CoTrader global config 
+  * @param _cotraderGlobalConfig         Address of CoTrader global config
   */
   constructor(
     address _owner,
@@ -60,7 +60,7 @@ contract SmartFundETH is SmartFundCore {
   *
   * @return The amount of shares allocated to the depositor
   */
-  function deposit() external payable returns (uint256) {
+  function deposit() external verifyOracleSender payable returns (uint256) {
     // Check if the sender is allowed to deposit into the fund
     if (onlyWhitelist)
       require(whitelist[msg.sender]);

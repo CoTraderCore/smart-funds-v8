@@ -1862,6 +1862,13 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
   // })
 
   describe('Orcale additional', function() {
+    // update and provide data from Oracle
+    async function updateOracle(value, sender){
+      await Oracle.setMockValue(value)
+      await LINK.approve(smartFundETH.address, toWei(String(1)), {from: sender})
+      await smartFundETH.updateFundValueFromOracle(LINK.address, toWei(String(1)), {from: sender})
+    }
+
     it('Owner can update correct Trade freeze time', async function() {
        await smartFundETH.set_TRADE_FREEZE_TIME(duration.minutes(10))
     })
@@ -1869,42 +1876,64 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
     it('Owner can update Deposit/Withdraw freeze time', async function() {
        await smartFundETH.set_DW_FREEZE_TIME(duration.minutes(40))
     })
-    //
-    // it('Not Owner can Not update correct Trade freeze time', async function() {
-    //    await smartFundETH.set_TRADE_FREEZE_TIME(duration.minutes(40), { from:userTwo })
-    //    .should.be.rejectedWith(EVMRevert)
-    // })
-    //
-    // it('Not Owner can Not update Deposit/Withdraw freeze time', async function() {
-    //    await smartFundETH.set_DW_FREEZE_TIME(duration.minutes(10), { from:userTwo })
-    //    .should.be.rejectedWith(EVMRevert)
-    // })
 
-    // // the same for buing pools and call defi for full funds
-    // it('TODO Manager cant trade if user do deposit and can after freeze time', async function() {
-    //
-    // })
-    //
-    // it('TODO Manager cant trade if user do withdraw and can after freeze time', async function() {
-    //
-    // })
-    //
-    // it('TODO Next user can deposit if prev user not use his time', async function() {
-    //
-    // })
-    //
-    // it('TODO Next user can withdraw if prev user not use his time', async function() {
-    //
-    // })
-    //
-    // it('TODO Next user can deposit if prev user use his time', async function() {
-    //
-    // })
-    //
-    // it('TODO Next user can withdraw if prev user use his time', async function() {
-    //
-    // })
-    //
+    it('Not Owner can Not update correct Trade freeze time', async function() {
+       await smartFundETH.set_TRADE_FREEZE_TIME(duration.minutes(40), { from:userTwo })
+       .should.be.rejectedWith(EVMRevert)
+    })
+
+    it('Not Owner can Not update Deposit/Withdraw freeze time', async function() {
+       await smartFundETH.set_DW_FREEZE_TIME(duration.minutes(10), { from:userTwo })
+       .should.be.rejectedWith(EVMRevert)
+    })
+
+    it('Next user cant deposit if prev user open deposi procedure, but can if prev user not used his time', async function() {
+      // first deposit (total shares 0) not require Oracle call
+      await smartFundETH.deposit({ from: userOne, value: 100 })
+      assert.equal(await smartFundETH.totalShares(), toWei(String(1)))
+      // update price from user 1 (open deposit process)
+      await updateOracle(100, userOne)
+
+      // should be rejected
+      await updateOracle(100, userTwo).should.be.rejectedWith(EVMRevert)
+      await smartFundETH.deposit({ from: userTwo, value: 100 }).should.be.rejectedWith(EVMRevert)
+
+      // update time
+      await advanceTimeAndBlock(duration.minutes(31))
+
+      // success
+      await updateOracle(100, userTwo)
+      await smartFundETH.deposit({ from: userTwo, value: 100 })
+      assert.equal(await smartFundETH.totalShares(), toWei(String(2)))
+    })
+
+    it('TODO Next user can not open  withdraw if prev user open withdraw procedure, but can if prev user not', async function() {
+      // first deposit (total shares 0) not require Oracle call
+      await smartFundETH.deposit({ from: userOne, value: 100 })
+      assert.equal(await smartFundETH.totalShares(), toWei(String(1)))
+
+      // second user deposit
+      await updateOracle(100, userTwo)
+      await smartFundETH.deposit({ from: userTwo, value: 100 })
+      assert.equal(await smartFundETH.totalShares(), toWei(String(2)))
+
+      // update price from user 1 (open withdarw process)
+      await advanceTimeAndBlock(duration.minutes(31))
+      await updateOracle(100, userOne)
+
+      // should be rejected
+      await updateOracle(100, userTwo).should.be.rejectedWith(EVMRevert)
+      await smartFundETH.withdraw(0, { from: userTwo}).should.be.rejectedWith(EVMRevert)
+
+      // update time
+      await advanceTimeAndBlock(duration.minutes(31))
+
+      // success
+      await updateOracle(100, userTwo)
+      await smartFundETH.withdraw(0, { from: userTwo})
+      assert.equal(await smartFundETH.totalShares(), toWei(String(1)))
+    })
+
     // it('TODO Test deposit after changed time ', async function() {
     //
     // })
@@ -1918,6 +1947,10 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
     // })
     //
     // it('TODO Manager cant change value more then set in min max', async function() {
+    //
+    // })
+
+    // it('TODO fund manager can set new max tokens ', async function() {
     //
     // })
   })

@@ -136,7 +136,7 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
     _;
   }
 
-  // not allow call user B (for a 5 minutes) if user A not finished operation
+  // not allow call user B (for a freeze minutes) if user A not finished operation
   // allow call any user for a first deposit
   modifier verifyOracleSender {
     if(totalShares > 0 && latestOracleCallOnTime + TRADE_FREEZE_TIME > now)
@@ -660,9 +660,9 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
   */
   function set_MAX_TOKENS(uint256 _newMaxTokens) public onlyOwner {
     // Require correct amount
-    require(_newTime >= cotraderGlobalConfig.MIN_MAX_TOKENS(), "TOKENS LESS THAN MIN");
-    require(_newTime <= cotraderGlobalConfig.MAX_MAX_TOKENS(),"TOKENS MORE THAN MAX");
-    MAX_TOKENS = _newMaxTokens
+    require(_newMaxTokens >= cotraderGlobalConfig.MIN_MAX_TOKENS(), "TOKENS LESS THAN MIN");
+    require(_newMaxTokens <= cotraderGlobalConfig.MAX_MAX_TOKENS(),"TOKENS MORE THAN MAX");
+    MAX_TOKENS = _newMaxTokens;
   }
 
 
