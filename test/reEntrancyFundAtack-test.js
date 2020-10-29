@@ -152,7 +152,8 @@ contract('ReEntrancy Atack', function([userOne, userTwo, userThree]) {
       '0x0000000000000000000000000000000000000000', // poolPortalAddress,
       '0x0000000000000000000000000000000000000000', // permitted addresses
       Oracle.address,                               // Oracle
-      true                                          // verification for trade tokens
+      true,                                         // verification for trade tokens
+      '0x0000000000000000000000000000000000000000'  // CoTrader config
     )
 
     // Deploy atack contracts

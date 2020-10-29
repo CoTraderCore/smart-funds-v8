@@ -41,6 +41,7 @@ const TokensTypeStorage = artifacts.require('./core/storage/TokensTypeStorage.so
 const PermittedAddresses = artifacts.require('./core/verification/PermittedAddresses.sol')
 const MerkleWhiteList = artifacts.require('./core/verification/MerkleTreeTokensVerification.sol')
 const DefiPortal = artifacts.require('./core/portals/DefiPortal.sol')
+const CoTraderGlobalConfig = artifacts.require('./core/CoTraderGlobalConfig.sol')
 
 // mock
 const YVault = artifacts.require('./tokens/YVaultMock.sol')
@@ -77,7 +78,8 @@ let xxxERC,
     defiPortal,
     yDAI,
     ETHBNT,
-    Oracle
+    Oracle,
+    CoTraderConfig
 
 
 
@@ -215,6 +217,8 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       DAI.address
     )
 
+    CoTraderConfig = await CoTraderGlobalConfig.new()
+
     // Deploy ETH fund
     smartFundETH = await SmartFundETH.new(
       userOne,                                      // address _owner,
@@ -226,7 +230,8 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       defiPortal.address,
       permittedAddresses.address,
       Oracle.address,                               // Oracle
-      true                                          // verification for trade tokens
+      true,                                         // verification for trade tokens
+      CoTraderConfig.address
     )
 
     // send all BNT and UNI pools to portal

@@ -41,6 +41,8 @@ const SmartFundETH = artifacts.require('./core/light_funds/SmartFundETHLight.sol
 const TokensTypeStorage = artifacts.require('./core/storage/TokensTypeStorage.sol')
 const PermittedAddresses = artifacts.require('./core/verification/PermittedAddresses.sol')
 const MerkleWhiteList = artifacts.require('./core/verification/MerkleTreeTokensVerification.sol')
+const CoTraderGlobalConfig = artifacts.require('./core/CoTraderGlobalConfig.sol')
+
 
 // mock
 const Token = artifacts.require('./tokens/Token')
@@ -66,7 +68,8 @@ let xxxERC,
     oneInch,
     merkleWhiteList,
     MerkleTREE,
-    Oracle
+    Oracle,
+    CoTraderConfig
 
 
 
@@ -162,6 +165,8 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       DAI.address
     )
 
+    CoTraderConfig = await CoTraderGlobalConfig.new()
+
     // Deploy ETH fund
     smartFundETH = await SmartFundETH.new(
       userOne,                                      // address _owner,
@@ -171,7 +176,8 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       exchangePortal.address,                       // address _exchangePortalAddress,
       permittedAddresses.address,                   // permitted address
       Oracle.address,                               // Oracle
-      true                                          // verification for trade tokens
+      true,                                         // verification for trade tokens
+      CoTraderConfig.address
     )
   }
 

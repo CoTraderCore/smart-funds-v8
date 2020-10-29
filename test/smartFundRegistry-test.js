@@ -105,6 +105,7 @@ contract('SmartFundRegistry', function([userOne, userTwo, userThree]) {
     this.defiPortal = '0x0000000000000000000000000000000000000003'
     this.DAI = '0x0000000000000000000000000000000000000004'
     this.oracleAddress = '0x0000000000000000000000000000000000000005'
+    this.cotraderConfig = '0x0000000000000000000000000000000000000006'
 
     this.permittedAddresses = await PermittedAddresses.new(
       this.ExchangePortal,
@@ -134,7 +135,8 @@ contract('SmartFundRegistry', function([userOne, userTwo, userThree]) {
       this.SmartFundERC20LightFactory.address,      //   SmartFundERC20LightFactory
       this.defiPortal,                              //   Defi Portal
       this.permittedAddresses.address,              //   PermittedAddresses
-      this.oracleAddress                            //   Oracle
+      this.oracleAddress,                           //   Oracle
+      this.cotraderConfig                           //   CoTrader config
     )
   })
 
@@ -158,6 +160,10 @@ contract('SmartFundRegistry', function([userOne, userTwo, userThree]) {
 
     it('Correct initial Oracle', async function() {
       assert.equal(this.oracleAddress, await this.registry.oracleAddress())
+    })
+
+    it('Correct initial CoTrader config', async function() {
+      assert.equal(this.cotraderConfig , await this.registry.cotraderGlobalConfig())
     })
 
     it('Correct initial DAI', async function() {
