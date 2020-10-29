@@ -935,6 +935,18 @@ abstract contract SmartFundCore is Ownable, IERC20 {
   }
 
   /**
+  * @dev Allows the fund manager set new max trade tokens
+  *
+  * @param _newMaxTokens   Tokens amount
+  */
+  function set_MAX_TOKENS(uint256 _newMaxTokens) public onlyOwner {
+    // Require correct amount
+    require(_newTime >= cotraderGlobalConfig.MIN_MAX_TOKENS(), "TOKENS LESS THAN MIN");
+    require(_newTime <= cotraderGlobalConfig.MAX_MAX_TOKENS(),"TOKENS MORE THAN MAX");
+    MAX_TOKENS = _newMaxTokens
+  }
+
+  /**
   * @dev This method is present in the alpha testing phase in case for some reason there are funds
   * left in the SmartFund after all shares were withdrawn
   *

@@ -13,7 +13,7 @@ contract CoTraderGlobalConfig is Ownable {
 
   // max tokens
   uint256 public MIN_MAX_TOKENS = 20;
-  uint256 public MAX_MAX_TOKENS = 50;
+  uint256 public MAX_MAX_TOKENS = 40;
 
 
   function set_MIN_TRADE_FREEZE(uint256 _value) public onlyOwner {

@@ -631,7 +631,7 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
   * @param _newTime   Minutes in unix time representation
   */
   function set_TRADE_FREEZE_TIME(uint256 _newTime) public onlyOwner {
-    // Require corerct time
+    // Require correct time
     require(_newTime >= cotraderGlobalConfig.MIN_TRADE_FREEZE(), "TIME LESS THAN MIN");
     require(_newTime <= cotraderGlobalConfig.MAX_TRADE_FREEZE(),"TIME MORE THAN MAX");
     // Update
@@ -650,6 +650,19 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
     require(_newTime <= cotraderGlobalConfig.MAX_DW_INTERVAL(), "TIME MORE THAN MAX");
     // Update
     DW_FREEZE_TIME = _newTime;
+  }
+
+
+  /**
+  * @dev Allows the fund manager set new max trade tokens
+  *
+  * @param _newMaxTokens   Tokens amount
+  */
+  function set_MAX_TOKENS(uint256 _newMaxTokens) public onlyOwner {
+    // Require correct amount
+    require(_newTime >= cotraderGlobalConfig.MIN_MAX_TOKENS(), "TOKENS LESS THAN MIN");
+    require(_newTime <= cotraderGlobalConfig.MAX_MAX_TOKENS(),"TOKENS MORE THAN MAX");
+    MAX_TOKENS = _newMaxTokens
   }
 
 
