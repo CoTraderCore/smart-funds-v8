@@ -1869,101 +1869,121 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       await smartFundETH.updateFundValueFromOracle(LINK.address, toWei(String(1)), {from: sender})
     }
 
-    it('Owner can update correct Trade freeze time', async function() {
-       await smartFundETH.set_TRADE_FREEZE_TIME(duration.minutes(10))
-    })
+    // it('Owner can update correct Trade freeze time', async function() {
+    //    await smartFundETH.set_TRADE_FREEZE_TIME(duration.minutes(10))
+    // })
+    //
+    // it('Owner can update Deposit/Withdraw freeze time', async function() {
+    //    await smartFundETH.set_DW_FREEZE_TIME(duration.minutes(40))
+    // })
+    //
+    // it('Not Owner can Not update correct Trade freeze time', async function() {
+    //    await smartFundETH.set_TRADE_FREEZE_TIME(duration.minutes(40), { from:userTwo })
+    //    .should.be.rejectedWith(EVMRevert)
+    // })
+    //
+    // it('Not Owner can Not update Deposit/Withdraw freeze time', async function() {
+    //    await smartFundETH.set_DW_FREEZE_TIME(duration.minutes(10), { from:userTwo })
+    //    .should.be.rejectedWith(EVMRevert)
+    // })
+    //
+    // it('Next user cant deposit if prev user open deposi procedure, but can if prev user not used his time', async function() {
+    //   // first deposit (total shares 0) not require Oracle call
+    //   await smartFundETH.deposit({ from: userOne, value: 100 })
+    //   assert.equal(await smartFundETH.totalShares(), toWei(String(1)))
+    //   // update price from user 1 (open deposit process)
+    //   await updateOracle(100, userOne)
+    //
+    //   // should be rejected
+    //   await updateOracle(100, userTwo).should.be.rejectedWith(EVMRevert)
+    //   await smartFundETH.deposit({ from: userTwo, value: 100 }).should.be.rejectedWith(EVMRevert)
+    //
+    //   // update time
+    //   await advanceTimeAndBlock(duration.minutes(31))
+    //
+    //   // success
+    //   await updateOracle(100, userTwo)
+    //   await smartFundETH.deposit({ from: userTwo, value: 100 })
+    //   assert.equal(await smartFundETH.totalShares(), toWei(String(2)))
+    // })
+    //
+    // it('Next user can not open  withdraw if prev user open withdraw procedure, but can if prev user not', async function() {
+    //   // first deposit (total shares 0) not require Oracle call
+    //   await smartFundETH.deposit({ from: userOne, value: 100 })
+    //   assert.equal(await smartFundETH.totalShares(), toWei(String(1)))
+    //
+    //   // second user deposit
+    //   await updateOracle(100, userTwo)
+    //   await smartFundETH.deposit({ from: userTwo, value: 100 })
+    //   assert.equal(await smartFundETH.totalShares(), toWei(String(2)))
+    //
+    //   // update price from user 1 (open withdarw process)
+    //   await advanceTimeAndBlock(duration.minutes(31))
+    //   await updateOracle(100, userOne)
+    //
+    //   // should be rejected
+    //   await updateOracle(100, userTwo).should.be.rejectedWith(EVMRevert)
+    //   await smartFundETH.withdraw(0, { from: userTwo}).should.be.rejectedWith(EVMRevert)
+    //
+    //   // update time
+    //   await advanceTimeAndBlock(duration.minutes(31))
+    //
+    //   // success
+    //   await updateOracle(100, userTwo)
+    //   await smartFundETH.withdraw(0, { from: userTwo})
+    //   assert.equal(await smartFundETH.totalShares(), toWei(String(1)))
+    // })
+    //
+    // it('Manager can change Oracle address', async function() {
+    //   const newOracleAddress = '0x0000000000000000000000000000000000000000'
+    //   await permittedAddresses.addNewAddress(newOracleAddress, 5)
+    //   assert.equal(await smartFundETH.fundValueOracle(), Oracle.address)
+    //   await smartFundETH.setNewFundValueOracle(newOracleAddress)
+    //   assert.equal(await smartFundETH.fundValueOracle(), newOracleAddress)
+    // })
+    //
+    // it('Fund manager can set new max tokens ', async function() {
+    //   assert.equal(await smartFundETH.MAX_TOKENS(), 20)
+    //   // should be rejected (not corerct amount)
+    //   await smartFundETH.set_MAX_TOKENS(await CoTraderConfig.MIN_MAX_TOKENS() - 1)
+    //   .should.be.rejectedWith(EVMRevert)
+    //
+    //   await smartFundETH.set_MAX_TOKENS(await CoTraderConfig.MAX_MAX_TOKENS() + 1)
+    //   .should.be.rejectedWith(EVMRevert)
+    //
+    //   // success
+    //   await smartFundETH.set_MAX_TOKENS(25)
+    //   assert.equal(await smartFundETH.MAX_TOKENS(), 25)
+    // })
+    //
+    // it('Not Fund manager can NOT set new max tokens ', async function() {
+    //   await smartFundETH.set_MAX_TOKENS(25, { from:userTwo })
+    //   .should.be.rejectedWith(EVMRevert)
+    // })
 
-    it('Owner can update Deposit/Withdraw freeze time', async function() {
-       await smartFundETH.set_DW_FREEZE_TIME(duration.minutes(40))
-    })
-
-    it('Not Owner can Not update correct Trade freeze time', async function() {
-       await smartFundETH.set_TRADE_FREEZE_TIME(duration.minutes(40), { from:userTwo })
-       .should.be.rejectedWith(EVMRevert)
-    })
-
-    it('Not Owner can Not update Deposit/Withdraw freeze time', async function() {
-       await smartFundETH.set_DW_FREEZE_TIME(duration.minutes(10), { from:userTwo })
-       .should.be.rejectedWith(EVMRevert)
-    })
-
-    it('Next user cant deposit if prev user open deposi procedure, but can if prev user not used his time', async function() {
-      // first deposit (total shares 0) not require Oracle call
-      await smartFundETH.deposit({ from: userOne, value: 100 })
-      assert.equal(await smartFundETH.totalShares(), toWei(String(1)))
-      // update price from user 1 (open deposit process)
-      await updateOracle(100, userOne)
-
-      // should be rejected
-      await updateOracle(100, userTwo).should.be.rejectedWith(EVMRevert)
-      await smartFundETH.deposit({ from: userTwo, value: 100 }).should.be.rejectedWith(EVMRevert)
-
-      // update time
-      await advanceTimeAndBlock(duration.minutes(31))
-
-      // success
-      await updateOracle(100, userTwo)
-      await smartFundETH.deposit({ from: userTwo, value: 100 })
-      assert.equal(await smartFundETH.totalShares(), toWei(String(2)))
-    })
-
-    it('Next user can not open  withdraw if prev user open withdraw procedure, but can if prev user not', async function() {
-      // first deposit (total shares 0) not require Oracle call
+    it('Test deposit after new changed time ', async function() {
       await smartFundETH.deposit({ from: userOne, value: 100 })
       assert.equal(await smartFundETH.totalShares(), toWei(String(1)))
 
       // second user deposit
       await updateOracle(100, userTwo)
-      await smartFundETH.deposit({ from: userTwo, value: 100 })
-      assert.equal(await smartFundETH.totalShares(), toWei(String(2)))
-
-      // update price from user 1 (open withdarw process)
-      await advanceTimeAndBlock(duration.minutes(31))
-      await updateOracle(100, userOne)
-
-      // should be rejected
-      await updateOracle(100, userTwo).should.be.rejectedWith(EVMRevert)
-      await smartFundETH.withdraw(0, { from: userTwo}).should.be.rejectedWith(EVMRevert)
 
       // update time
+      await smartFundETH.set_DW_FREEZE_TIME(duration.minutes(40))
+
+      // revert (time)
       await advanceTimeAndBlock(duration.minutes(31))
+      await updateOracle(100, userTwo).should.be.rejectedWith(EVMRevert)
+      await smartFundETH.deposit({ from: userTwo, value: 100 }).should.be.rejectedWith(EVMRevert)
+
+      // update time
+      await smartFundETH.set_DW_FREEZE_TIME(duration.minutes(30))
 
       // success
       await updateOracle(100, userTwo)
-      await smartFundETH.withdraw(0, { from: userTwo})
-      assert.equal(await smartFundETH.totalShares(), toWei(String(1)))
+      await smartFundETH.deposit({ from: userTwo, value: 100 })
+      assert.equal(await smartFundETH.totalShares(), toWei(String(2)))
     })
-
-    it('Manager can change Oracle address', async function() {
-      const newOracleAddress = '0x0000000000000000000000000000000000000000'
-      await permittedAddresses.addNewAddress(newOracleAddress, 5)
-      assert.equal(await smartFundETH.fundValueOracle(), Oracle.address)
-      await smartFundETH.setNewFundValueOracle(newOracleAddress)
-      assert.equal(await smartFundETH.fundValueOracle(), newOracleAddress)
-    })
-
-    it('Fund manager can set new max tokens ', async function() {
-      assert.equal(await smartFundETH.MAX_TOKENS(), 20)
-      // should be rejected (not corerct amount)
-      await smartFundETH.set_MAX_TOKENS(await CoTraderConfig.MIN_MAX_TOKENS() - 1)
-      .should.be.rejectedWith(EVMRevert)
-
-      await smartFundETH.set_MAX_TOKENS(await CoTraderConfig.MAX_MAX_TOKENS() + 1)
-      .should.be.rejectedWith(EVMRevert)
-
-      // success
-      await smartFundETH.set_MAX_TOKENS(25)
-      assert.equal(await smartFundETH.MAX_TOKENS(), 25)
-    })
-
-    it('Not Fund manager can NOT set new max tokens ', async function() {
-      await smartFundETH.set_MAX_TOKENS(25, { from:userTwo })
-      .should.be.rejectedWith(EVMRevert)
-    })
-
-    // it('TODO Test deposit after new changed time ', async function() {
-    //
-    // })
     //
     // it('TODO Test withdraw after new changed time ', async function() {
     //
