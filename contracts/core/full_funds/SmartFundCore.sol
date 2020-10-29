@@ -892,7 +892,7 @@ abstract contract SmartFundCore is Ownable, IERC20 {
     // Set new
     defiPortal = DefiPortalInterface(_newDefiPortalAddress);
   }
-  
+
 
   /**
   * @dev Allows the fund manager to connect to a new Oracle
@@ -929,7 +929,7 @@ abstract contract SmartFundCore is Ownable, IERC20 {
   function set_DW_FREEZE_TIME(uint256 _newTime) public onlyOwner {
     // Require corerct time
     require(_newTime >= cotraderGlobalConfig.MIN_DW_INTERVAL(), "TIME LESS THAN MIN");
-    require(_newTime <= cotraderGlobalConfig.MAX_DW_INTERVAL(),"TIME MORE THAN MAX");
+    require(_newTime <= cotraderGlobalConfig.MAX_DW_INTERVAL(), "TIME MORE THAN MAX");
     // Update
     DW_FREEZE_TIME = _newTime;
   }

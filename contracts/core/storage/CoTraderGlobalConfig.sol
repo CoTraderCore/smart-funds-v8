@@ -5,7 +5,7 @@ import "../../zeppelin-solidity/contracts/access/Ownable.sol";
 contract CoTraderGlobalConfig is Ownable {
   // trade freeze
   uint256 public MIN_TRADE_FREEZE = 3 minutes;
-  uint256 public MAX_TRADE_FREEZE = 10 minutes;
+  uint256 public MAX_TRADE_FREEZE = 15 minutes;
 
   // open next deposit/withdarw
   uint256 public MIN_DW_INTERVAL = 30 minutes;
