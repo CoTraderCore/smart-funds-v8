@@ -1984,10 +1984,30 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       await smartFundETH.deposit({ from: userTwo, value: 100 })
       assert.equal(await smartFundETH.totalShares(), toWei(String(2)))
     })
-    //
-    // it('TODO Test withdraw after new changed time ', async function() {
-    //
-    // })
+
+    it('Test withdraw after new changed time ', async function() {
+      await smartFundETH.deposit({ from: userOne, value: 100 })
+      assert.equal(await smartFundETH.totalShares(), toWei(String(1)))
+
+      // second user deposit
+      await updateOracle(100, userOne)
+
+      // update time
+      await smartFundETH.set_DW_FREEZE_TIME(duration.minutes(40))
+
+      // revert (time)
+      await advanceTimeAndBlock(duration.minutes(31))
+      await updateOracle(100, userOne).should.be.rejectedWith(EVMRevert)
+      await smartFundETH.withdraw(0, { from: userOne }).should.be.rejectedWith(EVMRevert)
+
+      // update time
+      await smartFundETH.set_DW_FREEZE_TIME(duration.minutes(30))
+
+      // success
+      await updateOracle(100, userOne)
+      await smartFundETH.withdraw(0, { from: userOne })
+      assert.equal(await smartFundETH.totalShares(), 0)
+    })
 
     // it('TODO Test trade after new changed time ', async function() {
     //
