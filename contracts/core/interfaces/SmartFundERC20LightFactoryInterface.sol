@@ -7,7 +7,8 @@ interface SmartFundERC20LightFactoryInterface {
     address _permittedAddresses,
     address _coinAddress,
     address _fundValueOracle,
-    bool    _isRequireTradeVerification
+    bool    _isRequireTradeVerification,
+    address _cotraderGlobalConfig
   )
   external
   returns(address);

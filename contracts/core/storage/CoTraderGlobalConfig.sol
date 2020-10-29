@@ -2,7 +2,7 @@ pragma solidity ^0.6.12;
 
 import "../../zeppelin-solidity/contracts/access/Ownable.sol";
 
-contract CoTraderGlobalConfig {
+contract CoTraderGlobalConfig is Ownable {
   // trade freeze
   uint256 public MIN_TRADE_FREEZE = 3 minutes;
   uint256 public MAX_TRADE_FREEZE = 10 minutes;

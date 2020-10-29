@@ -6,7 +6,8 @@ interface SmartFundETHLightFactoryInterface {
     address _exchangePortalAddress,
     address _permittedAddresses,
     address _fundValueOracle,
-    bool    _isRequireTradeVerification
+    bool    _isRequireTradeVerification,
+    address _cotraderGlobalConfig
   )
   external
   returns(address);
