@@ -37,6 +37,9 @@ contract SmartFundRegistry is Ownable {
   // Address of Oracle
   address public oracleAddress;
 
+  // Address of Cotrader global config
+  address public cotraderGlobalConfig;
+
   // Factories
   SmartFundETHFactoryInterface public smartFundETHFactory;
   SmartFundERC20FactoryInterface public smartFundERC20Factory;
@@ -63,6 +66,7 @@ contract SmartFundRegistry is Ownable {
   * @param _defiPortalAddress            Address of defiPortal contract
   * @param _permittedAddresses           Address of permittedAddresses contract
   * @param _oracleAddress                Address of fund value oracle contract
+  * @param _cotraderGlobalConfig         Address of CoTraderGlobalConfig contract
   */
   constructor(
     address _exchangePortalAddress,
@@ -75,7 +79,8 @@ contract SmartFundRegistry is Ownable {
     address _smartFundERC20LightFactory,
     address _defiPortalAddress,
     address _permittedAddresses,
-    address _oracleAddress
+    address _oracleAddress,
+    address _cotraderGlobalConfig
   ) public {
     exchangePortalAddress = _exchangePortalAddress;
     poolPortalAddress = _poolPortalAddress;
@@ -88,6 +93,7 @@ contract SmartFundRegistry is Ownable {
     defiPortalAddress = _defiPortalAddress;
     permittedAddresses = PermittedAddressesInterface(_permittedAddresses);
     oracleAddress = _oracleAddress;
+    cotraderGlobalConfig = _cotraderGlobalConfig;
   }
 
   /**
@@ -122,7 +128,8 @@ contract SmartFundRegistry is Ownable {
         defiPortalAddress,
         address(permittedAddresses),
         oracleAddress,
-        _isRequireTradeVerification
+        _isRequireTradeVerification,
+        cotraderGlobalConfig
       );
 
     }
@@ -140,7 +147,8 @@ contract SmartFundRegistry is Ownable {
         address(permittedAddresses),
         coinAddress,
         oracleAddress,
-        _isRequireTradeVerification
+        _isRequireTradeVerification,
+        cotraderGlobalConfig
       );
     }
 
@@ -178,7 +186,8 @@ contract SmartFundRegistry is Ownable {
         exchangePortalAddress,
         address(permittedAddresses),
         oracleAddress,
-        _isRequireTradeVerification
+        _isRequireTradeVerification,
+        cotraderGlobalConfig
       );
 
     }
@@ -194,7 +203,8 @@ contract SmartFundRegistry is Ownable {
         address(permittedAddresses),
         coinAddress,
         oracleAddress,
-        _isRequireTradeVerification
+        _isRequireTradeVerification,
+        cotraderGlobalConfig
       );
     }
 
