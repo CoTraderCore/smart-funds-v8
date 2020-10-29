@@ -613,6 +613,47 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
 
 
   /**
+  * @dev Allows the fund manager to connect to a new Oracle
+  *
+  * @param _newOracle    address of new fund value Oracle contract
+  */
+  function setNewFundValueOracle(address _newOracle) public onlyOwner {
+    // Require permitted Oracle
+    require(permittedAddresses.isMatchTypes(_newOracle, 5), "WRONG_ADDRESS");
+    // Set new 
+    fundValueOracle = IFundValueOracle(_newOracle);
+  }
+
+
+  /**
+  * @dev Allows the fund manager set new time for freeze trades
+  *
+  * @param _newTime   Minutes in unix time representation
+  */
+  function set_TRADE_FREEZE_TIME(uint256 _newTime) public onlyOwner {
+    // Require corerct time
+    require(_newTime >= cotraderGlobalConfig.MIN_TRADE_FREEZE(), "TIME LESS THAN MIN");
+    require(_newTime <= cotraderGlobalConfig.MAX_TRADE_FREEZE(),"TIME MORE THAN MAX");
+    // Update
+    TRADE_FREEZE_TIME = _newTime;
+  }
+
+
+  /**
+  * @dev Allows the fund manager set new time for open next deposit and withdraw interval
+  *
+  * @param _newTime   Minutes in unix time representation
+  */
+  function set_DW_FREEZE_TIME(uint256 _newTime) public onlyOwner {
+    // Require corerct time
+    require(_newTime >= cotraderGlobalConfig.MIN_DW_INTERVAL(), "TIME LESS THAN MIN");
+    require(_newTime <= cotraderGlobalConfig.MAX_DW_INTERVAL(),"TIME MORE THAN MAX");
+    // Update
+    DW_FREEZE_TIME = _newTime;
+  }
+
+
+  /**
   * @dev This method is present in the alpha testing phase in case for some reason there are funds
   * left in the SmartFund after all shares were withdrawn
   *
