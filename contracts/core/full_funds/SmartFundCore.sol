@@ -112,6 +112,11 @@ abstract contract SmartFundCore is Ownable, IERC20 {
   uint256 public latestOracleCallOnBlock;
   address public latestOracleCaller;
 
+  // time for trade freeze while user do deposit or withdarw
+  uint256 public TRADE_FREEZE_TIME = 5 minutes;
+  // freeze time period between deposit and withdraw
+  uint256 public DW_FREEZE_TIME = 30 minutes;
+
   // CoTrader platform config
   ICoTraderGlobalConfig public cotraderGlobalConfig;
 
@@ -156,8 +161,8 @@ abstract contract SmartFundCore is Ownable, IERC20 {
   // freeze trade while user do deposit and withdraw (5 minutes)
   modifier freezeTradeForDW {
     require(
-        now > latestOracleCallOnTime + 5 minutes,
-        "FUND_REQUIRE_5_MINUTES_FREEZE_FOR_UPDATE_PRICE"
+        now > latestOracleCallOnTime + TRADE_FREEZE_TIME,
+        "FUND_REQUIRE_TRADE_FREEZE_FOR_UPDATE_PRICE"
      );
     _;
   }
@@ -165,7 +170,7 @@ abstract contract SmartFundCore is Ownable, IERC20 {
   // not allow call user B (for a 5 minutes) if user A not finished operation
   // allow call any user for a first deposit
   modifier verifyOracleSender {
-    if(totalShares > 0 && latestOracleCallOnTime + 5 minutes > now)
+    if(totalShares > 0 && latestOracleCallOnTime + TRADE_FREEZE_TIME > now)
       require(msg.sender == latestOracleCaller, "SENDER_SHOULD_BE_LATEST_ORACLE_CALLER");
     _;
   }
@@ -235,7 +240,7 @@ abstract contract SmartFundCore is Ownable, IERC20 {
   // allow update oracle price
   function updateFundValueFromOracle(address _oracleTokenAddress, uint256 _oracleFee) public payable {
     // allow call Oracle only after 10 block after latest call
-    require(now > latestOracleCallOnTime + 30 minutes, "NEED WAIT 30 minutes");
+    require(now > latestOracleCallOnTime + DW_FREEZE_TIME, "NEED WAIT");
 
     // pay for using Oracle with ETH
     if(_oracleTokenAddress == address(ETH_TOKEN_ADDRESS)){
