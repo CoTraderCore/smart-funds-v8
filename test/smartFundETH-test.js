@@ -1989,14 +1989,14 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       await smartFundETH.deposit({ from: userOne, value: 100 })
       assert.equal(await smartFundETH.totalShares(), toWei(String(1)))
 
-      // second user deposit
+      // user start withdraw
       await updateOracle(100, userOne)
 
       // update time
       await smartFundETH.set_DW_FREEZE_TIME(duration.minutes(40))
 
       // revert (time)
-      await advanceTimeAndBlock(duration.minutes(31))
+      await advanceTimeAndBlock(duration.minutes(30))
       await updateOracle(100, userOne).should.be.rejectedWith(EVMRevert)
       await smartFundETH.withdraw(0, { from: userOne }).should.be.rejectedWith(EVMRevert)
 
@@ -2009,9 +2009,55 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       assert.equal(await smartFundETH.totalShares(), 0)
     })
 
-    // it('TODO Test trade after new changed time ', async function() {
-    //
-    // })
+    it('Test trade after new changed time ', async function() {
+      // provide exchange portal with some assets
+      await yyyERC.transfer(exchangePortal.address, 1000)
+
+      // deposit
+      await smartFundETH.deposit({ from: userOne, value: 100 })
+      assert.equal(await smartFundETH.totalShares(), toWei(String(1)))
+
+      // second user start deposit process
+      await updateOracle(100, userTwo)
+
+      // increase time
+      await advanceTimeAndBlock(duration.minutes(3))
+
+      // get proof and position for dest token
+      const proofYYY = MerkleTREE.getProof(keccak256(yyyERC.address)).map(x => buf2hex(x.data))
+      const positionYYY = MerkleTREE.getProof(keccak256(yyyERC.address)).map(x => x.position === 'right' ? 1 : 0)
+
+      // should be rejected because 5 minutes by default
+      await smartFundETH.trade(
+         ETH_TOKEN_ADDRESS,
+         100,
+         yyyERC.address,
+         0,
+         proofYYY,
+         positionYYY,
+         PARASWAP_MOCK_ADDITIONAL_PARAMS, 1,{
+         from: userOne,
+       }).should.be.rejectedWith(EVMRevert)
+
+       assert.equal(await yyyERC.balanceOf(smartFundETH.address), 0)
+
+       // reduce time from 5 to 3 minutes
+       await smartFundETH.set_TRADE_FREEZE_TIME(duration.minutes(3))
+
+       await smartFundETH.trade(
+          ETH_TOKEN_ADDRESS,
+          100,
+          yyyERC.address,
+          0,
+          proofYYY,
+          positionYYY,
+          PARASWAP_MOCK_ADDITIONAL_PARAMS, 1,{
+          from: userOne,
+        })
+
+       assert.equal(await yyyERC.balanceOf(smartFundETH.address), 100)
+    })
+
   })
 
   // describe('Update addresses', function() {
