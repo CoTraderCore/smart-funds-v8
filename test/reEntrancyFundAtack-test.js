@@ -185,18 +185,26 @@ contract('ReEntrancy Atack', function([userOne, userTwo, userThree]) {
       await smartFundETH.deposit({ from: userOne, value: toWei(String(10)) })
       assert.equal(await web3.eth.getBalance(smartFundETH.address), toWei(String(10)))
 
-      // Deposit as hacker
+      await Oracle.setMockValue(toWei(String(10)))
+
+      // Update value from atack contract
+      await LINK.approve(atackContract.address, toWei(String(1)))
+      await atackContract.updateFundValueFromAtacker(LINK.address, toWei(String(1)))
+
+      // Deposit as a hacker
       await atackContract.pay({ from: userTwo, value: toWei(String(1)) })
-
-      await updateOracle(toWei(String(10)), userOne)
-
       await atackContract.deposit(toWei(String(1)))
       assert.equal(await web3.eth.getBalance(smartFundETH.address), toWei(String(11)))
 
-      // Atack should be rejected
+      // Update value from atack contract
+      await Oracle.setMockValue(toWei(String(11)))
+
       await advanceTimeAndBlock(duration.minutes(31))
       await LINK.approve(atackContract.address, toWei(String(1)))
+
       await atackContract.updateFundValueFromAtacker(LINK.address, toWei(String(1)))
+
+      // Atack should be rejected
       await atackContract.startAtack({ from: userTwo }).should.be.rejectedWith(EVMRevert)
       assert.equal(await web3.eth.getBalance(smartFundETH.address), toWei(String(11)))
     })
@@ -270,6 +278,10 @@ contract('ReEntrancy Atack', function([userOne, userTwo, userThree]) {
 
       // check fund balance (now fund balance have 2 ETH)
       assert.equal(await web3.eth.getBalance(smartFundETH.address), toWei(String(2)))
+
+      // Update Oracle value
+      await advanceTimeAndBlock(duration.minutes(31))
+      await updateOracle(toWei(String(2)), userOne)
 
       // Atack contract now manager
       await smartFundETH.transferOwnership(atackContract.address)
