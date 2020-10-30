@@ -544,7 +544,7 @@ contract('smartFundERC20', function([userOne, userTwo, userThree]) {
           // // FM now withdraws their profit
         await smartFundERC20.fundManagerWithdraw({ from: userOne })
         // Platform recieve commision
-        assert.notEqual(await web3.eth.getBalance(await CoTraderConfig.PLATFORM_ADDRESS()), 0)
+        assert.notEqual(await DAI.balanceOf(await CoTraderConfig.PLATFORM_ADDRESS()), 0)
       })
 
    it('Should properly calculate profit after another user made profit and withdrew', async function() {

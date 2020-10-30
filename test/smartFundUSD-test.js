@@ -632,7 +632,7 @@ contract('smartFundERC20', function([userOne, userTwo, userThree]) {
           // // FM now withdraws their profit
         await smartFundERC20.fundManagerWithdraw({ from: userOne })
         // Platform recieve commision
-        assert.notEqual(await web3.eth.getBalance(await CoTraderConfig.PLATFORM_ADDRESS()), 0)
+        assert.notEqual(await DAI.balanceOf(await CoTraderConfig.PLATFORM_ADDRESS()), 0)
       })
 
    it('Should properly calculate profit after another user made profit and withdrew', async function() {
@@ -1793,6 +1793,220 @@ contract('smartFundERC20', function([userOne, userTwo, userThree]) {
     })
   })
 
+  describe('Orcale additional', function() {
+    // update and provide data from Oracle
+    async function updateOracle(value, sender){
+      await Oracle.setMockValue(value)
+      await LINK.approve(smartFundERC20.address, toWei(String(1)), {from: sender})
+      await smartFundERC20.updateFundValueFromOracle(LINK.address, toWei(String(1)), {from: sender})
+    }
+
+    it('Owner can update correct Trade freeze time', async function() {
+       await smartFundERC20.set_TRADE_FREEZE_TIME(duration.minutes(10))
+    })
+
+    it('Owner can update Deposit/Withdraw freeze time', async function() {
+       await smartFundERC20.set_DW_FREEZE_TIME(duration.minutes(40))
+    })
+
+    it('Not Owner can Not update correct Trade freeze time', async function() {
+       await smartFundERC20.set_TRADE_FREEZE_TIME(duration.minutes(40), { from:userTwo })
+       .should.be.rejectedWith(EVMRevert)
+    })
+
+    it('Not Owner can Not update Deposit/Withdraw freeze time', async function() {
+       await smartFundERC20.set_DW_FREEZE_TIME(duration.minutes(10), { from:userTwo })
+       .should.be.rejectedWith(EVMRevert)
+    })
+
+    it('Next user cant deposit if prev user open deposi procedure, but can if prev user not used his time', async function() {
+      await DAI.approve(smartFundERC20.address, 100, { from: userOne })
+      // first deposit (total shares 0) not require Oracle call
+      await smartFundERC20.deposit(100, { from: userOne })
+      assert.equal(await smartFundERC20.totalShares(), toWei(String(1)))
+      // update price from user 1 (open deposit process)
+      await updateOracle(100, userOne)
+
+      await DAI.transfer(userTwo, 100,)
+      await DAI.approve(smartFundERC20.address, 100, { from: userTwo })
+
+      // should be rejected
+      await updateOracle(100, userTwo).should.be.rejectedWith(EVMRevert)
+      await smartFundERC20.deposit(100, { from: userTwo }).should.be.rejectedWith(EVMRevert)
+
+      // update time
+      await advanceTimeAndBlock(duration.minutes(31))
+
+      // success
+      await updateOracle(100, userTwo)
+      await smartFundERC20.deposit(100, { from: userTwo })
+      assert.equal(await smartFundERC20.totalShares(), toWei(String(2)))
+    })
+
+    it('Next user can not open  withdraw if prev user open withdraw procedure, but can if prev user not', async function() {
+      await DAI.approve(smartFundERC20.address, 100, { from: userOne })
+
+      // first deposit (total shares 0) not require Oracle call
+      await smartFundERC20.deposit(100, { from: userOne })
+      assert.equal(await smartFundERC20.totalShares(), toWei(String(1)))
+
+      await DAI.transfer(userTwo, 100,)
+      await DAI.approve(smartFundERC20.address, 100, { from: userTwo })
+
+      // second user deposit
+      await updateOracle(100, userTwo)
+      await smartFundERC20.deposit(100, { from: userTwo })
+      assert.equal(await smartFundERC20.totalShares(), toWei(String(2)))
+
+      // update price from user 1 (open withdarw process)
+      await advanceTimeAndBlock(duration.minutes(31))
+      await updateOracle(100, userOne)
+
+      // should be rejected
+      await updateOracle(100, userTwo).should.be.rejectedWith(EVMRevert)
+      await smartFundERC20.withdraw(0, { from: userTwo}).should.be.rejectedWith(EVMRevert)
+
+      // update time
+      await advanceTimeAndBlock(duration.minutes(31))
+
+      // success
+      await updateOracle(100, userTwo)
+      await smartFundERC20.withdraw(0, { from: userTwo})
+      assert.equal(await smartFundERC20.totalShares(), toWei(String(1)))
+    })
+
+    it('Manager can change Oracle address', async function() {
+      const newOracleAddress = '0x0000000000000000000000000000000000000000'
+      await permittedAddresses.addNewAddress(newOracleAddress, 5)
+      assert.equal(await smartFundERC20.fundValueOracle(), Oracle.address)
+      await smartFundERC20.setNewFundValueOracle(newOracleAddress)
+      assert.equal(await smartFundERC20.fundValueOracle(), newOracleAddress)
+    })
+
+    it('Fund manager can set new max tokens ', async function() {
+      assert.equal(await smartFundERC20.MAX_TOKENS(), 20)
+      // should be rejected (not corerct amount)
+      await smartFundERC20.set_MAX_TOKENS(await CoTraderConfig.MIN_MAX_TOKENS() - 1)
+      .should.be.rejectedWith(EVMRevert)
+
+      await smartFundERC20.set_MAX_TOKENS(await CoTraderConfig.MAX_MAX_TOKENS() + 1)
+      .should.be.rejectedWith(EVMRevert)
+
+      // success
+      await smartFundERC20.set_MAX_TOKENS(25)
+      assert.equal(await smartFundERC20.MAX_TOKENS(), 25)
+    })
+
+    it('Not Fund manager can NOT set new max tokens ', async function() {
+      await smartFundERC20.set_MAX_TOKENS(25, { from:userTwo })
+      .should.be.rejectedWith(EVMRevert)
+    })
+
+    it('Test deposit after new changed time ', async function() {
+      await DAI.approve(smartFundERC20.address, 100, { from: userOne })
+
+      await smartFundERC20.deposit(100, { from: userOne })
+      assert.equal(await smartFundERC20.totalShares(), toWei(String(1)))
+
+      await DAI.transfer(userTwo, 100,)
+      await DAI.approve(smartFundERC20.address, 100, { from: userTwo })
+
+      // second user deposit
+      await updateOracle(100, userTwo)
+
+      // update time
+      await smartFundERC20.set_DW_FREEZE_TIME(duration.minutes(40))
+
+      // revert (time)
+      await advanceTimeAndBlock(duration.minutes(31))
+      await updateOracle(100, userTwo).should.be.rejectedWith(EVMRevert)
+      await smartFundERC20.deposit(100, { from: userTwo }).should.be.rejectedWith(EVMRevert)
+
+      // update time
+      await smartFundERC20.set_DW_FREEZE_TIME(duration.minutes(30))
+
+      // success
+      await updateOracle(100, userTwo)
+      await smartFundERC20.deposit(100, { from: userTwo })
+      assert.equal(await smartFundERC20.totalShares(), toWei(String(2)))
+    })
+
+    it('Test withdraw after new changed time ', async function() {
+      await DAI.approve(smartFundERC20.address, 100, { from: userOne })
+      await smartFundERC20.deposit(100, { from: userOne })
+      assert.equal(await smartFundERC20.totalShares(), toWei(String(1)))
+
+      // user start withdraw
+      await updateOracle(100, userOne)
+
+      // update time
+      await smartFundERC20.set_DW_FREEZE_TIME(duration.minutes(40))
+
+      // revert (time)
+      await advanceTimeAndBlock(duration.minutes(30))
+      await updateOracle(100, userOne).should.be.rejectedWith(EVMRevert)
+      await smartFundERC20.withdraw(0, { from: userOne }).should.be.rejectedWith(EVMRevert)
+
+      // update time
+      await smartFundERC20.set_DW_FREEZE_TIME(duration.minutes(30))
+
+      // success
+      await updateOracle(100, userOne)
+      await smartFundERC20.withdraw(0, { from: userOne })
+      assert.equal(await smartFundERC20.totalShares(), 0)
+    })
+
+    it('Test trade after new changed time ', async function() {
+      // provide exchange portal with some assets
+      await yyyERC.transfer(exchangePortal.address, 1000)
+
+      // deposit
+      await DAI.approve(smartFundERC20.address, 100, { from: userOne })
+      await smartFundERC20.deposit(100, { from: userOne })
+      assert.equal(await smartFundERC20.totalShares(), toWei(String(1)))
+
+      // second user start deposit process
+      await updateOracle(100, userTwo)
+
+      // increase time
+      await advanceTimeAndBlock(duration.minutes(3))
+
+      // get proof and position for dest token
+      const proofYYY = MerkleTREE.getProof(keccak256(yyyERC.address)).map(x => buf2hex(x.data))
+      const positionYYY = MerkleTREE.getProof(keccak256(yyyERC.address)).map(x => x.position === 'right' ? 1 : 0)
+
+      // should be rejected because 5 minutes by default
+      await smartFundERC20.trade(
+         DAI.address,
+         100,
+         yyyERC.address,
+         0,
+         proofYYY,
+         positionYYY,
+         PARASWAP_MOCK_ADDITIONAL_PARAMS, 1,{
+         from: userOne,
+       }).should.be.rejectedWith(EVMRevert)
+
+       assert.equal(await yyyERC.balanceOf(smartFundERC20.address), 0)
+
+       // reduce time from 5 to 3 minutes
+       await smartFundERC20.set_TRADE_FREEZE_TIME(duration.minutes(3))
+
+       await smartFundERC20.trade(
+          DAI.address,
+          100,
+          yyyERC.address,
+          0,
+          proofYYY,
+          positionYYY,
+          PARASWAP_MOCK_ADDITIONAL_PARAMS, 1,{
+          from: userOne,
+        })
+
+       assert.equal(await yyyERC.balanceOf(smartFundERC20.address), 100)
+    })
+  })
+
 
   describe('Update addresses', function() {
     const testAddress = '0x0000000000000000000000000000000000000777'
@@ -1848,5 +2062,5 @@ contract('smartFundERC20', function([userOne, userTwo, userThree]) {
       .should.be.rejectedWith(EVMRevert)
     })
   })
-  // END
+  END
 })
