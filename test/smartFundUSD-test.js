@@ -2062,5 +2062,5 @@ contract('smartFundERC20', function([userOne, userTwo, userThree]) {
       .should.be.rejectedWith(EVMRevert)
     })
   })
-  END
+  // END
 })
