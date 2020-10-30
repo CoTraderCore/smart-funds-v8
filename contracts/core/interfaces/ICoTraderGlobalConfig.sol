@@ -7,4 +7,6 @@ interface ICoTraderGlobalConfig {
 
   function MIN_MAX_TOKENS() external view returns(uint256);
   function MAX_MAX_TOKENS() external view returns(uint256);
+
+  function PLATFORM_ADDRESS() external view returns(address);
 }

@@ -165,14 +165,13 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       DAI.address
     )
 
-    CoTraderConfig = await CoTraderGlobalConfig.new()
+    CoTraderConfig = await CoTraderGlobalConfig.new(COT_DAO_WALLET.address)
 
     // Deploy ETH fund
     smartFundETH = await SmartFundETH.new(
       userOne,                                      // address _owner,
       'TEST ETH FUND',                              // string _name,
       successFee,                                   // uint256 _successFee,
-      COT_DAO_WALLET.address,                       // address _platformAddress,
       exchangePortal.address,                       // address _exchangePortalAddress,
       permittedAddresses.address,                   // permitted address
       Oracle.address,                               // Oracle
@@ -543,8 +542,8 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
 
           // // FM now withdraws their profit
         await smartFundETH.fundManagerWithdraw({ from: userOne })
-        // Manager, can get his 10%, and remains 0.0001996 it's  platform commision
-        assert.equal(await web3.eth.getBalance(smartFundETH.address), 0)
+        // Platform recieve commision
+        assert.notEqual(await web3.eth.getBalance(await CoTraderConfig.PLATFORM_ADDRESS()), 0)
       })
 
    it('Should properly calculate profit after another user made profit and withdrew', async function() {

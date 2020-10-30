@@ -224,14 +224,13 @@ contract('smartFundERC20', function([userOne, userTwo, userThree]) {
       DAI.address
     )
 
-    CoTraderConfig = await CoTraderGlobalConfig.new()
+    CoTraderConfig = await CoTraderGlobalConfig.new(COT_DAO_WALLET.address)
 
     // Deploy USD fund
     smartFundERC20 = await SmartFundERC20.new(
       '0x0000000000000000000000000000000000000000', // address _owner,
       'TEST USD FUND',                              // string _name,
       successFee,                                   // uint256 _successFee,
-      COT_DAO_WALLET.address,                       // address _platformAddress,
       exchangePortal.address,                       // address _exchangePortalAddress,
       poolPortal.address,                           // address _poolPortalAddress,
       defiPortal.address,
@@ -632,8 +631,8 @@ contract('smartFundERC20', function([userOne, userTwo, userThree]) {
 
           // // FM now withdraws their profit
         await smartFundERC20.fundManagerWithdraw({ from: userOne })
-        // Manager, can get his 10%, and remains 0.0001996 it's  platform commision
-        assert.equal(await DAI.balanceOf(smartFundERC20.address), 0)
+        // Platform recieve commision
+        assert.notEqual(await web3.eth.getBalance(await CoTraderConfig.PLATFORM_ADDRESS()), 0)
       })
 
    it('Should properly calculate profit after another user made profit and withdrew', async function() {

@@ -20,6 +20,7 @@ const SmartFundETHFactory = artifacts.require('./core/full_funds/SmartFundETHFac
 const SmartFundERC20Factory = artifacts.require('./core/full_funds/SmartFundERC20Factory.sol')
 const SmartFundETHLightFactory = artifacts.require('./core/light_funds/SmartFundETHLightFactory.sol')
 const SmartFundERC20LightFactory = artifacts.require('./core/light_funds/SmartFundERC20LightFactory.sol')
+
 // Registry
 const SmartFundRegistry = artifacts.require('./core/SmartFundRegistry.sol')
 

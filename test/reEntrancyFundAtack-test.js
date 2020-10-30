@@ -34,6 +34,8 @@ const PARASWAP_MOCK_ADDITIONAL_PARAMS = web3.eth.abi.encodeParameters(
 const SmartFundETH = artifacts.require('./core/full_funds/SmartFundETH.sol')
 const TokensTypeStorage = artifacts.require('./core/storage/TokensTypeStorage.sol')
 const MerkleWhiteList = artifacts.require('./core/verification/MerkleTreeTokensVerification.sol')
+const CoTraderGlobalConfig = artifacts.require('./core/CoTraderGlobalConfig.sol')
+
 
 // mock contracts
 const ReEntrancyFundAtack = artifacts.require('./ReEntrancyFundAtack')
@@ -58,7 +60,8 @@ let xxxERC,
     tokensType,
     merkleWhiteList,
     MerkleTREE,
-    Oracle
+    Oracle,
+    CoTraderConfig
 
 contract('ReEntrancy Atack', function([userOne, userTwo, userThree]) {
 
@@ -138,6 +141,8 @@ contract('ReEntrancy Atack', function([userOne, userTwo, userThree]) {
       merkleWhiteList.address
     )
 
+    CoTraderConfig = await CoTraderGlobalConfig.new(COT_DAO_WALLET.address)
+
     // allow exchange portal and pool portal write to token type storage
     await tokensType.addNewPermittedAddress(exchangePortal.address)
 
@@ -146,14 +151,13 @@ contract('ReEntrancy Atack', function([userOne, userTwo, userThree]) {
       userOne,                                      // address _owner,
       'TEST ETH FUND',                              // string _name,
       successFee,                                   // uint256 _successFee,
-      COT_DAO_WALLET.address,                       // address _platformAddress,
       exchangePortal.address,                       // address _exchangePortalAddress,
       '0x0000000000000000000000000000000000000000', // defi portal
       '0x0000000000000000000000000000000000000000', // poolPortalAddress,
       '0x0000000000000000000000000000000000000000', // permitted addresses
       Oracle.address,                               // Oracle
       true,                                         // verification for trade tokens
-      '0x0000000000000000000000000000000000000000'  // CoTrader config
+      CoTraderConfig.address                        // CoTrader config
     )
 
     // Deploy atack contracts
