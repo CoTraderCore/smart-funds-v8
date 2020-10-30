@@ -16,7 +16,6 @@ contract SmartFundETH is SmartFundCore {
   * @param _owner                        Address of the fund manager
   * @param _name                         Name of the fund, required for DetailedERC20 compliance
   * @param _successFee                   Percentage of profit that the fund manager receives
-  * @param _platformAddress              Address of platform to send fees to
   * @param _exchangePortalAddress        Address of initial exchange portal
   * @param _poolPortalAddress            Address of initial pool portal
   * @param _defiPortal                   Address of defi portal
@@ -29,7 +28,6 @@ contract SmartFundETH is SmartFundCore {
     address _owner,
     string memory _name,
     uint256 _successFee,
-    address _platformAddress,
     address _exchangePortalAddress,
     address _poolPortalAddress,
     address _defiPortal,
@@ -42,7 +40,6 @@ contract SmartFundETH is SmartFundCore {
     _owner,
     _name,
     _successFee,
-    _platformAddress,
     _exchangePortalAddress,
     _poolPortalAddress,
     _defiPortal,

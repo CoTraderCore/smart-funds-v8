@@ -54,9 +54,6 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
   // Percentages are rounded to 3 decimal places
   uint256 public TOTAL_PERCENTAGE = 10000;
 
-  // Address of the platform that takes a cut from the fund manager success cut
-  address public platformAddress;
-
   // The percentage of earnings paid to the fund manager. 10000 = 100%
   // e.g. 10% is 1000
   uint256 public successFee;
@@ -149,7 +146,6 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
     address _owner,
     string memory _name,
     uint256 _successFee,
-    address _platformAddress,
     address _exchangePortalAddress,
     address _permittedAddresses,
     address _coreFundAsset,
@@ -170,14 +166,6 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
     }
     else{
       transferOwnership(_owner);
-    }
-
-    // Init platform address
-    if(_platformAddress == address(0)){
-      platformAddress = msg.sender;
-    }
-    else{
-      platformAddress = _platformAddress;
     }
 
     // Initial Token is Ether
@@ -553,7 +541,7 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
 
     // prepare call data for _withdarw
     address[] memory spenders = new address[](2);
-    spenders[0] = platformAddress;
+    spenders[0] = cotraderGlobalConfig.PLATFORM_ADDRESS();
     spenders[1] = owner();
 
     uint256[] memory value = new uint256[](2);

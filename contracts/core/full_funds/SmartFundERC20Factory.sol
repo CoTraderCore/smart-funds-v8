@@ -3,12 +3,6 @@ pragma solidity ^0.6.12;
 import "./SmartFundERC20.sol";
 
 contract SmartFundERC20Factory {
-  address public platfromAddress;
-
-  constructor(address _platfromAddress) public {
-    platfromAddress = _platfromAddress;
-  }
-
   function createSmartFund(
     address _owner,
     string memory _name,
@@ -29,7 +23,6 @@ contract SmartFundERC20Factory {
       _owner,
       _name,
       _successFee,
-       platfromAddress,
       _exchangePortalAddress,
       _poolPortalAddress,
       _defiPortal,

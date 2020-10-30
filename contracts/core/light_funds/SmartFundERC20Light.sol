@@ -21,18 +21,16 @@ contract SmartFundERC20Light is SmartFundLightCore {
   * @param _owner                        Address of the fund manager
   * @param _name                         Name of the fund, required for DetailedERC20 compliance
   * @param _successFee                   Percentage of profit that the fund manager receives
-  * @param _platformAddress              Address of platform to send fees to
   * @param _exchangePortalAddress        Address of initial exchange portal
   * @param _permittedAddresses           Address of permittedAddresses contract
   * @param _fundValueOracle              Address of Oracle contract
   * @param _isRequireTradeVerification   If true fund will require verification from Merkle White list for each new asset
-  * @param _cotraderGlobalConfig         Address of CoTrader global config 
+  * @param _cotraderGlobalConfig         Address of CoTrader global config
   */
   constructor(
     address _owner,
     string memory _name,
     uint256 _successFee,
-    address _platformAddress,
     address _exchangePortalAddress,
     address _permittedAddresses,
     address _coinAddress,
@@ -44,7 +42,6 @@ contract SmartFundERC20Light is SmartFundLightCore {
     _owner,
     _name,
     _successFee,
-    _platformAddress,
     _exchangePortalAddress,
     _permittedAddresses,
     _coinAddress,
