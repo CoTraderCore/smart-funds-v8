@@ -14,6 +14,8 @@ require('chai')
 
 // real
 const PermittedAddresses = artifacts.require('./core/verification/PermittedAddresses.sol')
+const CoTraderGlobalConfig = artifacts.require('./core/CoTraderGlobalConfig.sol')
+
 
 // Factories
 const SmartFundETHFactory = artifacts.require('./core/full_funds/SmartFundETHFactory.sol')
@@ -106,7 +108,7 @@ contract('SmartFundRegistry', function([userOne, userTwo, userThree]) {
     this.defiPortal = '0x0000000000000000000000000000000000000003'
     this.DAI = '0x0000000000000000000000000000000000000004'
     this.oracleAddress = '0x0000000000000000000000000000000000000005'
-    this.cotraderConfig = '0x0000000000000000000000000000000000000006'
+
 
     this.permittedAddresses = await PermittedAddresses.new(
       this.ExchangePortal,
@@ -116,13 +118,15 @@ contract('SmartFundRegistry', function([userOne, userTwo, userThree]) {
     )
 
     this.COT_DAO_WALLET = await CoTraderDAOWalletMock.new()
+    this.cotraderConfig = await CoTraderGlobalConfig.new(this.COT_DAO_WALLET.address)
+
     this.ETH_TOKEN_ADDRESS = '0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE'
 
-    this.smartFundETHFactory = await SmartFundETHFactory.new(this.COT_DAO_WALLET.address)
-    this.SmartFundERC20Factory = await SmartFundERC20Factory.new(this.COT_DAO_WALLET.address)
+    this.smartFundETHFactory = await SmartFundETHFactory.new()
+    this.SmartFundERC20Factory = await SmartFundERC20Factory.new()
 
-    this.SmartFundETHLightFactory = await SmartFundETHLightFactory.new(this.COT_DAO_WALLET.address)
-    this.SmartFundERC20LightFactory = await SmartFundERC20LightFactory.new(this.COT_DAO_WALLET.address)
+    this.SmartFundETHLightFactory = await SmartFundETHLightFactory.new()
+    this.SmartFundERC20LightFactory = await SmartFundERC20LightFactory.new()
 
 
     this.registry = await SmartFundRegistry.new(
@@ -137,7 +141,7 @@ contract('SmartFundRegistry', function([userOne, userTwo, userThree]) {
       this.defiPortal,                              //   Defi Portal
       this.permittedAddresses.address,              //   PermittedAddresses
       this.oracleAddress,                           //   Oracle
-      this.cotraderConfig                           //   CoTrader config
+      this.cotraderConfig.address                   //   CoTrader config
     )
   })
 
@@ -164,7 +168,11 @@ contract('SmartFundRegistry', function([userOne, userTwo, userThree]) {
     })
 
     it('Correct initial CoTrader config', async function() {
-      assert.equal(this.cotraderConfig , await this.registry.cotraderGlobalConfig())
+      assert.equal(this.cotraderConfig.address , await this.registry.cotraderGlobalConfig())
+    })
+
+    it('Correct initial CoTrader config DAO WAllet', async function() {
+      assert.equal(await this.cotraderConfig.PLATFORM_ADDRESS() , this.COT_DAO_WALLET.address)
     })
 
     it('Correct initial DAI', async function() {
@@ -185,7 +193,6 @@ contract('SmartFundRegistry', function([userOne, userTwo, userThree]) {
       assert.equal(this.PoolPortal, await fund.methods.poolPortal().call())
       assert.equal(this.defiPortal, await fund.methods.defiPortal().call())
       assert.equal('0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE', await fund.methods.coreFundAsset().call())
-      assert.equal(this.COT_DAO_WALLET.address, await fund.methods.platformAddress().call())
     })
 
     it('should be able create new USD fund and address in fund correct', async function() {
@@ -196,7 +203,6 @@ contract('SmartFundRegistry', function([userOne, userTwo, userThree]) {
       assert.equal(this.PoolPortal, await fund.methods.poolPortal().call())
       assert.equal(this.defiPortal, await fund.methods.defiPortal().call())
       assert.equal(this.DAI, await fund.methods.coreFundAsset().call())
-      assert.equal(this.COT_DAO_WALLET.address, await fund.methods.platformAddress().call())
     })
 
     it('should be able create new COT fund and address in fund correct', async function() {
@@ -207,7 +213,6 @@ contract('SmartFundRegistry', function([userOne, userTwo, userThree]) {
       assert.equal(this.PoolPortal, await fund.methods.poolPortal().call())
       assert.equal(this.defiPortal, await fund.methods.defiPortal().call())
       assert.equal(this.COT, await fund.methods.coreFundAsset().call())
-      assert.equal(this.COT_DAO_WALLET.address, await fund.methods.platformAddress().call())
     })
   })
 
@@ -218,7 +223,6 @@ contract('SmartFundRegistry', function([userOne, userTwo, userThree]) {
       const fund = new web3.eth.Contract(FundABI, await this.registry.smartFunds(0))
       assert.equal(this.ExchangePortal, await fund.methods.exchangePortal().call())
       assert.equal('0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE', await fund.methods.coreFundAsset().call())
-      assert.equal(this.COT_DAO_WALLET.address, await fund.methods.platformAddress().call())
     })
 
     it('should be able create new USD fund and address in fund correct', async function() {
@@ -227,7 +231,6 @@ contract('SmartFundRegistry', function([userOne, userTwo, userThree]) {
       const fund = new web3.eth.Contract(FundABI, await this.registry.smartFunds(0))
       assert.equal(this.ExchangePortal, await fund.methods.exchangePortal().call())
       assert.equal(this.DAI, await fund.methods.coreFundAsset().call())
-      assert.equal(this.COT_DAO_WALLET.address, await fund.methods.platformAddress().call())
     })
 
     it('should be able create new COT fund and address in fund correct', async function() {
@@ -236,7 +239,6 @@ contract('SmartFundRegistry', function([userOne, userTwo, userThree]) {
       const fund = new web3.eth.Contract(FundABI, await this.registry.smartFunds(0))
       assert.equal(this.ExchangePortal, await fund.methods.exchangePortal().call())
       assert.equal(this.COT, await fund.methods.coreFundAsset().call())
-      assert.equal(this.COT_DAO_WALLET.address, await fund.methods.platformAddress().call())
     })
   })
 
