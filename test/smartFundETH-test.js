@@ -2056,6 +2056,161 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
 
        assert.equal(await yyyERC.balanceOf(smartFundETH.address), 100)
     })
+
+    it('Test BUY/SELL POOL after new changed time ', async function() {
+      // provide exchange portal with some assets
+      await BNT.transfer(exchangePortal.address, toWei(String(1)))
+
+      // deposit
+      await smartFundETH.deposit({ from: userOne, value: toWei(String(2)) })
+      assert.equal(await smartFundETH.totalShares(), toWei(String(1)))
+
+
+      // get proof and position for dest token
+      const proofBNT = MerkleTREE.getProof(keccak256(BNT.address)).map(x => buf2hex(x.data))
+      const positionBNT = MerkleTREE.getProof(keccak256(BNT.address)).map(x => x.position === 'right' ? 1 : 0)
+
+      await exchangePortal.setRatio(1, 1)
+
+      // get 1 BNT from exchange portal
+      await smartFundETH.trade(
+          ETH_TOKEN_ADDRESS,
+          toWei(String(1)),
+          BNT.address,
+          0,
+          proofBNT,
+          positionBNT,
+          PARASWAP_MOCK_ADDITIONAL_PARAMS,
+          1,
+          {
+            from: userOne,
+          }
+      )
+
+      // should recieve BNT
+      assert.equal(await BNT.balanceOf(smartFundETH.address), toWei(String(1)))
+
+
+      const connectorsAddress = ["0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE", BNT.address]
+      const connectorsAmount = [toWei(String(1)), toWei(String(1))]
+
+      // second user start deposit or withdraw process
+      await updateOracle(toWei(String(2)), userTwo)
+
+      // increase time
+      await advanceTimeAndBlock(duration.minutes(3))
+
+      // buy BNT pool should be rejected
+      await smartFundETH.buyPool(toWei(String(2)), 0, ETHBNT.address, connectorsAddress, connectorsAmount, [], "0x").
+      should.be.rejectedWith(EVMRevert)
+
+      // reduce time from 5 to 3 minutes
+      await smartFundETH.set_TRADE_FREEZE_TIME(duration.minutes(3))
+
+      // success
+      await smartFundETH.buyPool(toWei(String(2)), 0, ETHBNT.address, connectorsAddress, connectorsAmount, [], "0x")
+
+      // Should recieve pool
+      assert.equal(await ETHBNT.balanceOf(smartFundETH.address), toWei(String(2)))
+
+      // return frezze time
+      await smartFundETH.set_TRADE_FREEZE_TIME(duration.minutes(5))
+
+      // increase time
+      await advanceTimeAndBlock(duration.minutes(31))
+
+      // second user start deposit or withdraw process
+      await updateOracle(toWei(String(2)), userTwo)
+
+      await advanceTimeAndBlock(duration.minutes(3))
+
+      // should be rejected (not correct time)
+      await smartFundETH.sellPool(toWei(String(2)), 0, ETHBNT.address, [], "0x").
+      should.be.rejectedWith(EVMRevert)
+
+      // update freeze time
+      await smartFundETH.set_TRADE_FREEZE_TIME(duration.minutes(3))
+
+      // success
+      await smartFundETH.sellPool(toWei(String(2)), 0, ETHBNT.address, [], "0x")
+
+      // check balance
+      assert.equal(await ETHBNT.balanceOf(smartFundETH.address), 0)
+      assert.equal(await BNT.balanceOf(smartFundETH.address), toWei(String(1)))
+      assert.equal(await web3.eth.getBalance(smartFundETH.address), toWei(String(1)))
+    })
+
+
+    it('Test DEFI after new changed time ', async function() {
+      // provide exchange portal with some assets
+      await DAI.transfer(exchangePortal.address, toWei(String(1)))
+
+      // deposit
+      await smartFundETH.deposit({ from: userOne, value: toWei(String(2)) })
+      assert.equal(await smartFundETH.totalShares(), toWei(String(1)))
+
+      // get proof and position for dest token
+      const proofDAI = MerkleTREE.getProof(keccak256(DAI.address)).map(x => buf2hex(x.data))
+      const positionDAI = MerkleTREE.getProof(keccak256(DAI.address)).map(x => x.position === 'right' ? 1 : 0)
+
+      await exchangePortal.setRatio(1, 1)
+
+      // get 1 BNT from exchange portal
+      await smartFundETH.trade(
+          ETH_TOKEN_ADDRESS,
+          toWei(String(1)),
+          DAI.address,
+          0,
+          proofDAI,
+          positionDAI,
+          PARASWAP_MOCK_ADDITIONAL_PARAMS,
+          1,
+          {
+            from: userOne,
+          }
+      )
+
+      // should recieve DAI
+      assert.equal(await DAI.balanceOf(smartFundETH.address), toWei(String(1)))
+
+
+      const connectorsAddress = ["0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE", BNT.address]
+      const connectorsAmount = [toWei(String(1)), toWei(String(1))]
+
+      // second user start deposit or withdraw process
+      await updateOracle(toWei(String(2)), userTwo)
+
+      // increase time
+      await advanceTimeAndBlock(duration.minutes(3))
+
+      // should be rejected
+      await smartFundETH.callDefiPortal(
+        [DAI.address],
+        [toWei(String(1))],
+        ["0x0000000000000000000000000000000000000000000000000000000000000000"],
+        web3.eth.abi.encodeParameters(
+         ['address', 'uint256'],
+         [yDAI.address, toWei(String(1))]
+        )
+      ).should.be.rejectedWith(EVMRevert)
+
+
+      // reduce time from 5 to 3 minutes
+      await smartFundETH.set_TRADE_FREEZE_TIME(duration.minutes(3))
+
+      // success
+      await smartFundETH.callDefiPortal(
+        [DAI.address],
+        [toWei(String(1))],
+        ["0x0000000000000000000000000000000000000000000000000000000000000000"],
+        web3.eth.abi.encodeParameters(
+         ['address', 'uint256'],
+         [yDAI.address, toWei(String(1))]
+        )
+      )
+
+      assert.equal(await yDAI.balanceOf(smartFundETH.address), toWei(String(1)))
+    })
   })
 
   describe('Update addresses', function() {
