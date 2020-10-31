@@ -5,7 +5,7 @@ import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contr
 import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contracts/token/ERC20/IERC20.sol";
 
 
-contract FundValueOracle is ChainlinkClient, Ownable{
+contract FundValueOracle is ChainlinkClient, Ownable {
     string public apiPath;
     bytes32[] public requestIdArrays;
     uint256 public fee;
@@ -77,6 +77,16 @@ contract FundValueOracle is ChainlinkClient, Ownable{
     // owner can update fee
     function updateFee(uint256 _fee) external onlyOwner {
       fee = _fee;
+    }
+
+    // owner can update jobId
+    function updateJobId(bytes32 _jobId) public onlyOwner {
+      jobId = _jobId;
+    }
+
+    // owner can update Oracle node 
+    function updateOracle(address _oracle) public onlyOwner {
+      oracle = _oracle;
     }
 
     // helper for convert address to string

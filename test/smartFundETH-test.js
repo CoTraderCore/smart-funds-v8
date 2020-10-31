@@ -311,7 +311,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       assert.equal(Number(await CoTraderConfig.MAX_DW_INTERVAL()), duration.hours(2))
 
       assert.equal(Number(await CoTraderConfig.MIN_MAX_TOKENS()), 20)
-      assert.equal(Number(await CoTraderConfig.MAX_MAX_TOKENS()), 50)
+      assert.equal(Number(await CoTraderConfig.MAX_MAX_TOKENS()), 40)
     })
 
     it('Correct init pool portal', async function() {
@@ -2090,15 +2090,14 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       // should recieve BNT
       assert.equal(await BNT.balanceOf(smartFundETH.address), toWei(String(1)))
 
-
-      const connectorsAddress = ["0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE", BNT.address]
-      const connectorsAmount = [toWei(String(1)), toWei(String(1))]
-
       // second user start deposit or withdraw process
       await updateOracle(toWei(String(2)), userTwo)
 
       // increase time
       await advanceTimeAndBlock(duration.minutes(3))
+
+      const connectorsAddress = ["0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE", BNT.address]
+      const connectorsAmount = [toWei(String(1)), toWei(String(1))]
 
       // buy BNT pool should be rejected
       await smartFundETH.buyPool(toWei(String(2)), 0, ETHBNT.address, connectorsAddress, connectorsAmount, [], "0x").
@@ -2172,10 +2171,6 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
 
       // should recieve DAI
       assert.equal(await DAI.balanceOf(smartFundETH.address), toWei(String(1)))
-
-
-      const connectorsAddress = ["0xEeeeeEeeeEeEeeEeEeEeeEEEeeeeEeeeeeeeEEeE", BNT.address]
-      const connectorsAmount = [toWei(String(1)), toWei(String(1))]
 
       // second user start deposit or withdraw process
       await updateOracle(toWei(String(2)), userTwo)
