@@ -68,6 +68,9 @@ contract SmartFundETH is SmartFundCore {
     // Calculate number of shares
     uint256 shares = calculateDepositToShares(msg.value);
 
+    // reset latest Oracle Caller for protect from double call
+    latestOracleCaller = address(0);
+
     totalWeiDeposited += msg.value;
 
     // If user would receive 0 shares, don't continue with deposit

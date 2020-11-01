@@ -84,6 +84,9 @@ contract SmartFundERC20 is SmartFundCore {
     // Calculate number of shares
     uint256 shares = calculateDepositToShares(depositAmount);
 
+    // reset latest Oracle Caller for protect from double call
+    latestOracleCaller = address(0);
+
     totalWeiDeposited += depositAmount;
 
     // If user would receive 0 shares, don't continue with deposit
