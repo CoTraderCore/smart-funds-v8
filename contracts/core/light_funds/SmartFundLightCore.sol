@@ -191,9 +191,10 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
   }
 
   // allow update oracle price
+  // _oracleTokenAddress it's fee token address 
   function updateFundValueFromOracle(address _oracleTokenAddress, uint256 _oracleFee) public payable {
     // allow call Oracle only after a certain period
-    require(now >= latestOracleCallOnTime + DW_FREEZE_TIME, "NEED WAIT");
+    require(now >= latestOracleCallOnTime + DW_FREEZE_TIME, "NEED WAIT DW FREEZE TIME");
 
     // pay for using Oracle with ETH
     if(_oracleTokenAddress == address(ETH_TOKEN_ADDRESS)){
