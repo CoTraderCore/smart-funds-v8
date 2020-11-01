@@ -1883,6 +1883,13 @@ contract('smartFundERC20', function([userOne, userTwo, userThree]) {
       assert.equal(await smartFundERC20.fundValueOracle(), newOracleAddress)
     })
 
+    it('Manager can NOT change NON permitted Oracle address', async function() {
+      const newOracleAddress = '0x0000000000000000000000000000000000000000'
+      await smartFundERC20.setNewFundValueOracle(newOracleAddress)
+      .should.be.rejectedWith(EVMRevert)
+      assert.equal(await smartFundERC20.fundValueOracle(), Oracle.address)
+    })
+
     it('Fund manager can set new max tokens ', async function() {
       assert.equal(await smartFundERC20.MAX_TOKENS(), 20)
       // should be rejected (not corerct amount)

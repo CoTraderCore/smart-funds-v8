@@ -1424,6 +1424,13 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       assert.equal(await smartFundETH.fundValueOracle(), newOracleAddress)
     })
 
+    it('Manager can NOT change NON permitted Oracle address', async function() {
+      const newOracleAddress = '0x0000000000000000000000000000000000000000'
+      await smartFundETH.setNewFundValueOracle(newOracleAddress)
+      .should.be.rejectedWith(EVMRevert)
+      assert.equal(await smartFundETH.fundValueOracle(), Oracle.address)
+    })
+
     it('Fund manager can set new max tokens ', async function() {
       assert.equal(await smartFundETH.MAX_TOKENS(), 20)
       // should be rejected (not corerct amount)

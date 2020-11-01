@@ -155,7 +155,7 @@ abstract contract SmartFundCore is Ownable, IERC20 {
   event SmartFundCreated(address indexed owner);
   event OracleUpdate(address caller, uint256 triggerTime, bytes32 id);
 
-  // freeze trade while user do deposit and withdraw (5 minutes)
+  // freeze trade while user do deposit and withdraw
   modifier freezeTradeForDW {
     require(
         now >= latestOracleCallOnTime + TRADE_FREEZE_TIME,
@@ -227,7 +227,7 @@ abstract contract SmartFundCore is Ownable, IERC20 {
 
   // allow update oracle price
   function updateFundValueFromOracle(address _oracleTokenAddress, uint256 _oracleFee) public payable {
-    // allow call Oracle only after 10 block after latest call
+    // allow call Oracle only after a certain time
     require(now >= latestOracleCallOnTime + DW_FREEZE_TIME, "NEED WAIT");
 
     // pay for using Oracle with ETH
@@ -257,8 +257,8 @@ abstract contract SmartFundCore is Ownable, IERC20 {
   // core function for calculate deposit and withdraw and managerWithdraw
   // return data from Oracle
   function calculateFundValue() public view returns (uint256) {
-      // caller can update only in 5 minutes
-      if(latestOracleCallOnTime + 5 minutes > now){
+      // caller can update only in TRADE_FREEZE_TIME
+      if(latestOracleCallOnTime + TRADE_FREEZE_TIME > now){
         // return data
         return fundValueOracle.getFundValueByID(latestOracleRequestID);
       }
