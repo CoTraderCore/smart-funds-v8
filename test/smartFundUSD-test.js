@@ -380,6 +380,16 @@
 //       await smartFundERC20.updateFundValueFromOracle(LINK.address, toWei(String(1)), {from: sender})
 //     }
 //
+//     async function calculateFundProfit(totalFundValue, oracleSender){
+//       // return int256(fundValue) + int256(totalWeiWithdrawn) - int256(totalWeiDeposited)
+//       await updateOracle(totalFundValue, oracleSender)
+//       const fundValue = new BigNumber(await smartFundERC20.calculateFundValue())
+//       const totalWeiWithdrawn = await smartFundERC20.totalWeiWithdrawn()
+//       const totalWeiDeposited = await smartFundERC20.totalWeiDeposited()
+//
+//       return fundValue.add(totalWeiWithdrawn).sub(totalWeiDeposited)
+//     }
+//
 //     it('should have correct total D/W wei data', async function() {
 //       assert.equal(await smartFundERC20.totalWeiDeposited(), 0)
 //       assert.equal(await smartFundERC20.totalWeiWithdrawn(), 0)
@@ -409,10 +419,8 @@
 //           from: userOne,
 //         })
 //
-//         await updateOracle(100, userOne)
 //         // check that we still haven't made a profit
-//         assert.equal(await smartFundERC20.calculateAddressProfit(userOne), 0)
-//         // assert.equal(await smartFundERC20.calculateFundProfit(), 0)
+//         assert.equal(await calculateFundProfit(100, userOne), 0)
 //     })
 //
 //     it('should accurately calculate profit upon price rise', async function() {
@@ -440,12 +448,7 @@
 //         })
 //
 //         // change the rate (making a profit)
-//         await exchangePortal.setRatio(1, 2)
-//         await updateOracle(200, userOne)
-//
-//         // check that we have made a profit
-//         assert.equal(await smartFundERC20.calculateAddressProfit(userOne), 100)
-//         // assert.equal(await smartFundERC20.calculateFundProfit(), 100)
+//         assert.equal(await calculateFundProfit(200, userOne), 100)
 //     })
 //
 //     it('should accurately calculate profit upon price fall', async function() {
@@ -473,12 +476,7 @@
 //         })
 //
 //         // change the rate to make a loss (2 tokens is 1 ether)
-//         await exchangePortal.setRatio(2, 1)
-//         await updateOracle(50, userOne)
-//
-//         // check that we made negatove profit
-//         assert.equal(await smartFundERC20.calculateAddressProfit(userOne), -50)
-//         // assert.equal(await smartFundERC20.calculateFundProfit(), -50)
+//         assert.equal(await calculateFundProfit(50, userOne), -50)
 //     })
 //
 //     it('should accurately calculate profit if price stays stable with multiple trades', async function() {
@@ -518,10 +516,8 @@
 //           from: userOne,
 //         })
 //
-//         await updateOracle(100, userOne)
 //         // check that we still haven't made a profit
-//         // assert.equal(await smartFundERC20.calculateFundProfit(), 0)
-//         assert.equal(await smartFundERC20.calculateAddressProfit(userOne), 0)
+//         assert.equal(await calculateFundProfit(100, userOne), 0)
 //     })
 //
 //     it('Fund manager should be able to withdraw after investor withdraws', async function() {
@@ -1059,89 +1055,6 @@
 //       await smartFundERC20.withdraw(0, { from: userTwo })
 //
 //       assert.equal(fromWei(await xxxERC.balanceOf(userTwo)), 0.5)
-//     })
-//
-//     it('should accurately calculate shares when FM makes a loss then breaks even', async function() {
-//       // deploy smartFund with 10% success fee
-//       await deployContracts(1000)
-//       // give exchange portal contract some money
-//       await xxxERC.transfer(exchangePortal.address, toWei(String(10)))
-//       await exchangePortal.pay({ from: userThree, value: toWei(String(3))})
-//       await DAI.transfer(exchangePortal.address, toWei(String(10)))
-//       // deposit in fund
-//       // send some DAI to user2
-//       DAI.transfer(userTwo, toWei(String(100)))
-//       await DAI.approve(smartFundERC20.address, toWei(String(1)), { from: userTwo })
-//       await smartFundERC20.deposit(toWei(String(1)), { from: userTwo })
-//
-//       // get proof and position for dest token
-//       const proofXXX = MerkleTREE.getProof(keccak256(xxxERC.address)).map(x => buf2hex(x.data))
-//       const positionXXX = MerkleTREE.getProof(keccak256(xxxERC.address)).map(x => x.position === 'right' ? 1 : 0)
-//
-//       await smartFundERC20.trade(
-//         DAI.address,
-//         toWei(String(1)),
-//         xxxERC.address,
-//         0,
-//         proofXXX,
-//         positionXXX,
-//         PARASWAP_MOCK_ADDITIONAL_PARAMS,
-//         1,
-//         {
-//           from: userOne,
-//         }
-//       )
-//
-//       // 1 token is now worth 1/2 DAI, the fund lost half its value
-//       await exchangePortal.setRatio(2, 1)
-//       // NOW TOTAL VALUE = 0.5 DAI
-//       await updateOracle(toWei(String(0.5)), userThree)
-//
-//       // send some DAI to user3
-//       DAI.transfer(userThree, toWei(String(100)))
-//       // user3 deposits, should have 2/3 of shares now
-//       await DAI.approve(smartFundERC20.address, toWei(String(1)), { from: userThree })
-//       await smartFundERC20.deposit(toWei(String(1)), { from: userThree })
-//
-//       assert.equal(await smartFundERC20.addressToShares.call(userTwo), toWei(String(1)))
-//       assert.equal(await smartFundERC20.addressToShares.call(userThree), toWei(String(2)))
-//
-//       // 1 token is now worth 2 ether, funds value is 3 ether
-//       await exchangePortal.setRatio(1, 2)
-//       await advanceTimeAndBlock(duration.minutes(31))
-//       // NOW TOTAL VALUE = 3 DAI
-//       await updateOracle(toWei(String(3)), userThree)
-//
-//       // get proof and position for dest token
-//       const proofDAI = MerkleTREE.getProof(keccak256(DAI.address)).map(x => buf2hex(x.data))
-//       const positionDAI = MerkleTREE.getProof(keccak256(DAI.address)).map(x => x.position === 'right' ? 1 : 0)
-//
-//       await advanceTimeAndBlock(duration.minutes(6))
-//       await smartFundERC20.trade(
-//         xxxERC.address,
-//         toWei(String(1)),
-//         DAI.address,
-//         2,
-//         proofDAI,
-//         positionDAI,
-//         ONEINCH_MOCK_ADDITIONAL_PARAMS,
-//         1,
-//         {
-//           from: userOne,
-//         }
-//       )
-//
-//       assert.equal(
-//         await DAI.balanceOf(smartFundERC20.address),
-//         toWei(String(3))
-//       )
-//
-//       await advanceTimeAndBlock(duration.minutes(31))
-//       // NOW TOTAL VALUE = 3 ETH
-//       await updateOracle(toWei(String(3)), userThree)
-//
-//       assert.equal(await smartFundERC20.calculateAddressProfit(userTwo), 0)
-//       assert.equal(await smartFundERC20.calculateAddressProfit(userThree), toWei(String(1)))
 //     })
 //   })
 //
