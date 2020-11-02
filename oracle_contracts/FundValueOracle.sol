@@ -11,22 +11,25 @@ contract FundValueOracle is ChainlinkClient, Ownable {
     uint256 public fee;
     address public chainLinkAddress;
 
-    address private oracle;
-    bytes32 private jobId;
+    address public oracle;
+    bytes32 public jobId;
 
     // Mapping of requestId => FundValue
     mapping (bytes32 => uint256) public getFundValueByID;
 
     /**
-       WARNING
-       RINKEBY CONSTRUCTOR
+       RINKEBY
+       oracle = address(0x7AFe1118Ea78C1eae84ca8feE5C65Bc76CcF879e);
+       jobId = "6d1bfe27e7034b1d87b5270556b17277";
+       fee = 1 * 10 ** 18; // 1 LINK
+       chainLinkAddress = address(0x01BE23585060835E02B77ef475b0Cc51aA1e0709);
     */
-    constructor() public {
+    constructor(address _oracle, bytes32 _jobId, uint256 _fee, address _chainLinkAddress) public {
         setPublicChainlinkToken();
-        oracle = address(0x7AFe1118Ea78C1eae84ca8feE5C65Bc76CcF879e);
-        jobId = "6d1bfe27e7034b1d87b5270556b17277";
-        fee = 1 * 10 ** 18; // 1 LINK
-        chainLinkAddress = address(0x01BE23585060835E02B77ef475b0Cc51aA1e0709);
+        oracle = _oracle;
+        jobId = _jobId;
+        fee = _fee
+        chainLinkAddress = _chainLinkAddress;
     }
 
     /**
@@ -84,7 +87,7 @@ contract FundValueOracle is ChainlinkClient, Ownable {
       jobId = _jobId;
     }
 
-    // owner can update Oracle node 
+    // owner can update Oracle node
     function updateOracle(address _oracle) public onlyOwner {
       oracle = _oracle;
     }
