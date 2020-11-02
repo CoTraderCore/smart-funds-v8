@@ -707,7 +707,7 @@ abstract contract SmartFundCore is Ownable, IERC20 {
   *
   * @return Amount of shares to be received
   */
-  function calculateDepositToShares(uint256 _amount) public view returns (uint256) {
+  function calculateDepositToShares(uint256 _amount) internal view returns (uint256) {
     uint256 fundManagerCut;
     uint256 fundValue;
 

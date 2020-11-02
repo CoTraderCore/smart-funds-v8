@@ -452,7 +452,7 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
   *
   * @return Amount of shares to be received
   */
-  function calculateDepositToShares(uint256 _amount) public returns (uint256) {
+  function calculateDepositToShares(uint256 _amount) internal returns (uint256) {
     uint256 fundManagerCut;
     uint256 fundValue;
 
