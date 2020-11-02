@@ -23,6 +23,20 @@ sudo node --max-old-space-size=4096 /usr/local/bin/truffle test
 
 
 ```
+ETH Full factory
+
+
+ERC20 Full factory
+
+
+ETH Light factory
+
+
+ERC20 Light factory
+```
+
+
+```
 DEV Notes
 1) calculateDepositToShares not the same as in previous versions fund
 we not sub msg.value, because via Oracle we can't take into account msg.value in total fund value
@@ -39,6 +53,17 @@ totalWeiDeposited += msg.value;
 
 because via Oracle we can't take into account msg.value in total fund value
 
+```
 
 
+```
+Removed methods
+
+calculateFundProfit
+
+calculateAddressValue
+
+calculateAddressProfit
+
+getFundTokenHolding
 ```

@@ -191,7 +191,7 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
   }
 
   // allow update oracle price
-  // _oracleTokenAddress it's fee token address 
+  // _oracleTokenAddress it's fee token address
   function updateFundValueFromOracle(address _oracleTokenAddress, uint256 _oracleFee) public payable {
     // allow call Oracle only after a certain period
     require(now >= latestOracleCallOnTime + DW_FREEZE_TIME, "NEED WAIT DW FREEZE TIME");
@@ -504,28 +504,6 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
     }
   }
 
-  // calculate the current value of an address's shares in the fund
-  function calculateAddressValue(address _address) public view returns (uint256) {
-    if (totalShares == 0)
-      return 0;
-
-    return calculateFundValue().mul(addressToShares[_address]).div(totalShares);
-  }
-
-  // calculate the net profit/loss for an address in this fund
-  function calculateAddressProfit(address _address) public view returns (int256) {
-    uint256 currentAddressValue = calculateAddressValue(_address);
-
-    return int256(currentAddressValue) - addressesNetDeposit[_address];
-  }
-
-  // return the funds profit in deposit token
-  function calculateFundProfit() public view returns (int256) {
-    uint256 fundValue = calculateFundValue();
-
-    return int256(fundValue) + int256(totalWeiWithdrawn) - int256(totalWeiDeposited);
-  }
-
   /**
   * @dev Allows the fund manager to withdraw their cut of the funds profit
   */
@@ -558,13 +536,6 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
 
     // add report
     fundManagerCashedOut = fundManagerCashedOut.add(fundManagerCut);
-  }
-
-  // This method was added to easily record the funds token balances, may (should?) be removed in the future
-  function getFundTokenHolding(IERC20 _token) external view returns (uint256) {
-    if (_token == ETH_TOKEN_ADDRESS)
-      return address(this).balance;
-    return _token.balanceOf(address(this));
   }
 
   /**
