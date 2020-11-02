@@ -28,7 +28,7 @@ contract FundValueOracle is ChainlinkClient, Ownable {
         setPublicChainlinkToken();
         oracle = _oracle;
         jobId = _jobId;
-        fee = _fee
+        fee = _fee;
         chainLinkAddress = _chainLinkAddress;
     }
 
