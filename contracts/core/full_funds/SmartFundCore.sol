@@ -15,7 +15,7 @@ pragma solidity ^0.6.12;
 */
 
 
-import "../interfaces/ExchangePortalInterface.sol";
+import "../interfaces/IExchangePortal.sol";
 import "../interfaces/PoolPortalInterface.sol";
 import "../interfaces/DefiPortalInterface.sol";
 import "../interfaces/PermittedAddressesInterface.sol";
@@ -41,7 +41,7 @@ abstract contract SmartFundCore is Ownable, IERC20 {
   uint256 public totalWeiWithdrawn = 0;
 
   // The Interface of the Exchange Portal
-  ExchangePortalInterface public exchangePortal;
+  IExchangePortal public exchangePortal;
 
   // The Interface of pool portall
   PoolPortalInterface public poolPortal;
@@ -205,7 +205,7 @@ abstract contract SmartFundCore is Ownable, IERC20 {
     tokenAddresses.push(address(ETH_TOKEN_ADDRESS));
 
     // Initial interfaces
-    exchangePortal = ExchangePortalInterface(_exchangePortalAddress);
+    exchangePortal = IExchangePortal(_exchangePortalAddress);
     poolPortal = PoolPortalInterface(_poolPortalAddress);
     defiPortal = DefiPortalInterface(_defiPortal);
     permittedAddresses = PermittedAddressesInterface(_permittedAddresses);
@@ -821,7 +821,7 @@ abstract contract SmartFundCore is Ownable, IERC20 {
     // Require correct permitted address type
     require(permittedAddresses.isMatchTypes(_newExchangePortalAddress, 1), "WRONG_ADDRESS");
     // Set new
-    exchangePortal = ExchangePortalInterface(_newExchangePortalAddress);
+    exchangePortal = IExchangePortal(_newExchangePortalAddress);
   }
 
   /**

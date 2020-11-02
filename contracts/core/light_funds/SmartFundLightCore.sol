@@ -13,7 +13,7 @@ pragma solidity ^0.6.12;
 */
 
 
-import "../interfaces/ExchangePortalInterface.sol";
+import "../interfaces/IExchangePortal.sol";
 import "../interfaces/PermittedAddressesInterface.sol";
 import "../interfaces/IFundValueOracle.sol";
 import "../interfaces/ICoTraderGlobalConfig.sol";
@@ -37,7 +37,7 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
   uint256 public totalWeiWithdrawn = 0;
 
   // The Interface of the Exchange Portal
-  ExchangePortalInterface public exchangePortal;
+  IExchangePortal public exchangePortal;
 
   // The Smart Contract which stores the addresses of all the authorized Exchange Portals
   PermittedAddressesInterface public permittedAddresses;
@@ -172,7 +172,7 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
     tokenAddresses.push(address(ETH_TOKEN_ADDRESS));
 
     // Initial interfaces
-    exchangePortal = ExchangePortalInterface(_exchangePortalAddress);
+    exchangePortal = IExchangePortal(_exchangePortalAddress);
     permittedAddresses = PermittedAddressesInterface(_permittedAddresses);
 
     // Initial core assets
@@ -568,7 +568,7 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
     // Require correct permitted address type
     require(permittedAddresses.isMatchTypes(_newExchangePortalAddress, 1), "WRONG_ADDRESS");
     // Set new
-    exchangePortal = ExchangePortalInterface(_newExchangePortalAddress);
+    exchangePortal = IExchangePortal(_newExchangePortalAddress);
   }
 
 

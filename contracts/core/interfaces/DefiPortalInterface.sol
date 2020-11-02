@@ -25,13 +25,4 @@ interface DefiPortalInterface {
       address[] memory tokensToReceive,
       uint256[] memory amountsToReceive
     );
-
-  function getValue(
-    address _from,
-    address _to,
-    uint256 _amount
-  )
-   external
-   view
-   returns(uint256);
 }

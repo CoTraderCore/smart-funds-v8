@@ -16,7 +16,7 @@ import "../../bancor/interfaces/BancorNetworkInterface.sol";
 import "../../oneInch/IOneSplitAudit.sol";
 
 import "../interfaces/ExchangePortalInterface.sol";
-import "../interfaces/DefiPortalInterface.sol";
+import "../interfaces/DefiPortalViewInterface.sol";
 import "../interfaces/PoolPortalViewInterface.sol";
 import "../interfaces/ITokensTypeStorage.sol";
 import "../interfaces/IMerkleTreeTokensVerification.sol";
@@ -41,7 +41,7 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
 
   // CoTrader portals
   PoolPortalViewInterface public poolPortal;
-  DefiPortalInterface public defiPortal;
+  DefiPortalViewInterface public defiPortal;
 
   // 1 inch flags
   // By default support Bancor + Uniswap + Uniswap v2
@@ -94,7 +94,7 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
     )
     public
   {
-    defiPortal = DefiPortalInterface(_defiPortal);
+    defiPortal = DefiPortalViewInterface(_defiPortal);
     bancorData = IGetBancorData(_bancorData);
     poolPortal = PoolPortalViewInterface(_poolPortal);
     oneInch = IOneSplitAudit(_oneInch);
@@ -651,7 +651,7 @@ contract ExchangePortal is ExchangePortalInterface, Ownable {
 
   // owner can set new defi portal
   function setNewDefiPortal(address _defiPortal) external onlyOwner {
-    defiPortal = DefiPortalInterface(_defiPortal);
+    defiPortal = DefiPortalViewInterface(_defiPortal);
   }
 
   // owner of portal can update 1 incg DEXs sources
