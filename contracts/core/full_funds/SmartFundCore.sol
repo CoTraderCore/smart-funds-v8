@@ -35,10 +35,10 @@ abstract contract SmartFundCore is Ownable, IERC20 {
   bool public isLightFund = false;
 
   // Total amount of ether or stable deposited by all users
-  uint256 public totalWeiDeposited = 0;
+  uint256 public totalWeiDeposited;
 
   // Total amount of ether or stable withdrawn by all users
-  uint256 public totalWeiWithdrawn = 0;
+  uint256 public totalWeiWithdrawn;
 
   // The Interface of the Exchange Portal
   IExchangePortal public exchangePortal;
@@ -74,7 +74,7 @@ abstract contract SmartFundCore is Ownable, IERC20 {
 
   // Boolean value that determines whether the fund accepts deposits from anyone or
   // only specific addresses approved by the manager
-  bool public onlyWhitelist = false;
+  bool public onlyWhitelist;
 
   // Mapping of addresses that are approved to deposit if the manager only want's specific
   // addresses to be able to invest in their fund
@@ -83,13 +83,13 @@ abstract contract SmartFundCore is Ownable, IERC20 {
   uint public version = 8;
 
   // the total number of shares in the fund
-  uint256 public totalShares = 0;
+  uint256 public totalShares;
 
   // Denomination of initial shares
   uint256 constant internal INITIAL_SHARES = 10 ** 18;
 
   // The earnings the fund manager has already cashed out
-  uint256 public fundManagerCashedOut = 0;
+  uint256 public fundManagerCashedOut;
 
   // for ETH and USD fund this asset different
   address public coreFundAsset;
@@ -151,7 +151,7 @@ abstract contract SmartFundCore is Ownable, IERC20 {
   modifier freezeTradeForDW {
     require(
         now >= latestOracleCallOnTime + cotraderGlobalConfig.TRADE_FREEZE_TIME(),
-        "FUND_REQUIRE_TRADE_FREEZE_FOR_UPDATE_PRICE"
+        "FREEZE_FOR_UPDATE_PRICE"
      );
     _;
   }
@@ -160,7 +160,7 @@ abstract contract SmartFundCore is Ownable, IERC20 {
   // allow call any user for a first deposit
   modifier verifyOracleSender {
     if(totalShares > 0 && latestOracleCallOnTime + cotraderGlobalConfig.TRADE_FREEZE_TIME() >= now)
-      require(msg.sender == latestOracleCaller, "SENDER_SHOULD_BE_LATEST_ORACLE_CALLER");
+      require(msg.sender == latestOracleCaller, "NOT_LATEST_ORACLE_CALLER");
     _;
   }
 
@@ -221,17 +221,17 @@ abstract contract SmartFundCore is Ownable, IERC20 {
   // _oracleTokenAddress it's fee token address
   function updateFundValueFromOracle(address _oracleTokenAddress, uint256 _oracleFee) public payable {
     // allow call Oracle only after a certain time
-    require(now >= latestOracleCallOnTime + cotraderGlobalConfig.DW_FREEZE_TIME(), "NEED WAIT DW FREEZE TIME");
+    require(now >= latestOracleCallOnTime + cotraderGlobalConfig.DW_FREEZE_TIME(), "DW_FREEZE");
 
     // pay for using Oracle with ETH
     if(_oracleTokenAddress == address(ETH_TOKEN_ADDRESS)){
-      require(msg.value == _oracleFee, "REQUIRE ETH");
+      require(msg.value == _oracleFee, "REQUIRE_ETH");
       // call oracle
       latestOracleRequestID = fundValueOracle.requestValue.value(_oracleFee)(address(this));
     }
     // for using Oracle with ERC20
     else{
-      require(msg.value == 0, "NO NEED ETH");
+      require(msg.value == 0, "NO_NEED_ETH");
       // transfer oracle token from sender and approve to oracle portal
       _transferFromSenderAndApproveTo(IERC20(_oracleTokenAddress), _oracleFee, address(fundValueOracle));
       // call oracle
@@ -256,7 +256,7 @@ abstract contract SmartFundCore is Ownable, IERC20 {
         return fundValueOracle.getFundValueByID(latestOracleRequestID);
       }
       else{
-        revert("ORACLE TIME EXPIRED");
+        revert("TIME_EXPIRED");
       }
   }
 
@@ -311,7 +311,7 @@ abstract contract SmartFundCore is Ownable, IERC20 {
   */
   function withdraw(uint256 _percentageWithdraw) external verifyOracleSender {
     require(totalShares != 0, "EMPTY_SHARES");
-    require(_percentageWithdraw <= TOTAL_PERCENTAGE, "INCORRECT_PERCENT");
+    require(_percentageWithdraw <= TOTAL_PERCENTAGE, "WRONG_PERCENT");
 
     uint256 percentageWithdraw = (_percentageWithdraw == 0) ? TOTAL_PERCENTAGE : _percentageWithdraw;
 
@@ -415,7 +415,7 @@ abstract contract SmartFundCore is Ownable, IERC20 {
     }
 
     // make sure fund recive destanation
-    require(receivedAmount >= _minReturn, "RECEIVED_LESS_THAN_MIN_RETURN");
+    require(receivedAmount >= _minReturn, "RECEIVED_LESS_THAN_MIN");
 
     // add token to trader list
     _addToken(address(_destination));
@@ -496,7 +496,7 @@ abstract contract SmartFundCore is Ownable, IERC20 {
      );
    }
    // make sure fund receive pool token
-   require(poolAmountReceive > 0, "EMPTY_POOL_RETURN");
+   require(poolAmountReceive > 0, "EMPTY_POOL");
    // Add pool as ERC20 for withdraw
    _addToken(_poolToken);
    // emit event
@@ -891,7 +891,7 @@ abstract contract SmartFundCore is Ownable, IERC20 {
   * @param _to              Address to approve to
   */
   function _transferFromSenderAndApproveTo(IERC20 _source, uint256 _sourceAmount, address _to) private {
-    require(_source.transferFrom(msg.sender, address(this), _sourceAmount), "CAN NOT TRANSFER FROM");
+    _source.transferFrom(msg.sender, address(this), _sourceAmount);
     // approve
     _source.approve(_to, _sourceAmount);
   }
