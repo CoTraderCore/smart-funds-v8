@@ -1705,24 +1705,6 @@ contract('smartFundERC20', function([userOne, userTwo, userThree]) {
       await smartFundERC20.updateFundValueFromOracle(LINK.address, toWei(String(1)), {from: sender})
     }
 
-    it('Owner can update correct Trade freeze time', async function() {
-       await smartFundERC20.set_TRADE_FREEZE_TIME(duration.minutes(10))
-    })
-
-    it('Owner can update Deposit/Withdraw freeze time', async function() {
-       await smartFundERC20.set_DW_FREEZE_TIME(duration.minutes(40))
-    })
-
-    it('Not Owner can Not update correct Trade freeze time', async function() {
-       await smartFundERC20.set_TRADE_FREEZE_TIME(duration.minutes(40), { from:userTwo })
-       .should.be.rejectedWith(EVMRevert)
-    })
-
-    it('Not Owner can Not update Deposit/Withdraw freeze time', async function() {
-       await smartFundERC20.set_DW_FREEZE_TIME(duration.minutes(10), { from:userTwo })
-       .should.be.rejectedWith(EVMRevert)
-    })
-
     it('Next user cant deposit if prev user open deposi procedure, but can if prev user not used his time', async function() {
       await DAI.approve(smartFundERC20.address, 100, { from: userOne })
       // first deposit (total shares 0) not require Oracle call
@@ -1794,25 +1776,6 @@ contract('smartFundERC20', function([userOne, userTwo, userThree]) {
       assert.equal(await smartFundERC20.fundValueOracle(), Oracle.address)
     })
 
-    it('Fund manager can set new max tokens ', async function() {
-      assert.equal(await smartFundERC20.MAX_TOKENS(), 20)
-      // should be rejected (not corerct amount)
-      await smartFundERC20.set_MAX_TOKENS(await CoTraderConfig.MIN_MAX_TOKENS() - 1)
-      .should.be.rejectedWith(EVMRevert)
-
-      await smartFundERC20.set_MAX_TOKENS(await CoTraderConfig.MAX_MAX_TOKENS() + 1)
-      .should.be.rejectedWith(EVMRevert)
-
-      // success
-      await smartFundERC20.set_MAX_TOKENS(25)
-      assert.equal(await smartFundERC20.MAX_TOKENS(), 25)
-    })
-
-    it('Not Fund manager can NOT set new max tokens ', async function() {
-      await smartFundERC20.set_MAX_TOKENS(25, { from:userTwo })
-      .should.be.rejectedWith(EVMRevert)
-    })
-
     it('Test deposit after new changed time ', async function() {
       await DAI.approve(smartFundERC20.address, 100, { from: userOne })
 
@@ -1826,7 +1789,7 @@ contract('smartFundERC20', function([userOne, userTwo, userThree]) {
       await updateOracle(100, userTwo)
 
       // update time
-      await smartFundERC20.set_DW_FREEZE_TIME(duration.minutes(40))
+      await CoTraderConfig.set_DW_FREEZE_TIME(duration.minutes(40))
 
       // revert (time)
       await advanceTimeAndBlock(duration.minutes(31))
@@ -1834,7 +1797,7 @@ contract('smartFundERC20', function([userOne, userTwo, userThree]) {
       await smartFundERC20.deposit(100, { from: userTwo }).should.be.rejectedWith(EVMRevert)
 
       // update time
-      await smartFundERC20.set_DW_FREEZE_TIME(duration.minutes(30))
+      await CoTraderConfig.set_DW_FREEZE_TIME(duration.minutes(30))
 
       // success
       await updateOracle(100, userTwo)
@@ -1851,7 +1814,7 @@ contract('smartFundERC20', function([userOne, userTwo, userThree]) {
       await updateOracle(100, userOne)
 
       // update time
-      await smartFundERC20.set_DW_FREEZE_TIME(duration.minutes(40))
+      await CoTraderConfig.set_DW_FREEZE_TIME(duration.minutes(40))
 
       // revert (time)
       await advanceTimeAndBlock(duration.minutes(30))
@@ -1859,7 +1822,7 @@ contract('smartFundERC20', function([userOne, userTwo, userThree]) {
       await smartFundERC20.withdraw(0, { from: userOne }).should.be.rejectedWith(EVMRevert)
 
       // update time
-      await smartFundERC20.set_DW_FREEZE_TIME(duration.minutes(30))
+      await CoTraderConfig.set_DW_FREEZE_TIME(duration.minutes(30))
 
       // success
       await updateOracle(100, userOne)
@@ -1901,7 +1864,7 @@ contract('smartFundERC20', function([userOne, userTwo, userThree]) {
        assert.equal(await yyyERC.balanceOf(smartFundERC20.address), 0)
 
        // reduce time from 5 to 3 minutes
-       await smartFundERC20.set_TRADE_FREEZE_TIME(duration.minutes(3))
+       await CoTraderConfig.set_TRADE_FREEZE_TIME(duration.minutes(3))
 
        await smartFundERC20.trade(
           DAI.address,
@@ -1966,7 +1929,7 @@ contract('smartFundERC20', function([userOne, userTwo, userThree]) {
       should.be.rejectedWith(EVMRevert)
 
       // reduce time from 5 to 3 minutes
-      await smartFundERC20.set_TRADE_FREEZE_TIME(duration.minutes(3))
+      await CoTraderConfig.set_TRADE_FREEZE_TIME(duration.minutes(3))
 
       // success
       await smartFundERC20.buyPool(toWei(String(2)), 0, DAIBNT.address, connectorsAddress, connectorsAmount, [], "0x")
@@ -1975,7 +1938,7 @@ contract('smartFundERC20', function([userOne, userTwo, userThree]) {
       assert.equal(await DAIBNT.balanceOf(smartFundERC20.address), toWei(String(2)))
 
       // return frezze time
-      await smartFundERC20.set_TRADE_FREEZE_TIME(duration.minutes(5))
+      await CoTraderConfig.set_TRADE_FREEZE_TIME(duration.minutes(5))
 
       // increase time
       await advanceTimeAndBlock(duration.minutes(31))
@@ -1990,7 +1953,7 @@ contract('smartFundERC20', function([userOne, userTwo, userThree]) {
       should.be.rejectedWith(EVMRevert)
 
       // update freeze time
-      await smartFundERC20.set_TRADE_FREEZE_TIME(duration.minutes(3))
+      await CoTraderConfig.set_TRADE_FREEZE_TIME(duration.minutes(3))
 
       // success
       await smartFundERC20.sellPool(toWei(String(2)), 0, DAIBNT.address, [], "0x")
@@ -2028,7 +1991,7 @@ contract('smartFundERC20', function([userOne, userTwo, userThree]) {
 
 
       // reduce time from 5 to 3 minutes
-      await smartFundERC20.set_TRADE_FREEZE_TIME(duration.minutes(3))
+      await CoTraderConfig.set_TRADE_FREEZE_TIME(duration.minutes(3))
 
       // success
       await smartFundERC20.callDefiPortal(

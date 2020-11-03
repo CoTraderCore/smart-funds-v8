@@ -303,17 +303,6 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       assert.equal(await Oracle.chainLinkAddress(), LINK.address)
     })
 
-    it('CoTrader config correct default values', async function() {
-      assert.equal(Number(await CoTraderConfig.MIN_TRADE_FREEZE()), duration.minutes(3))
-      assert.equal(Number(await CoTraderConfig.MAX_TRADE_FREEZE()), duration.minutes(15))
-
-      assert.equal(Number(await CoTraderConfig.MIN_DW_INTERVAL()), duration.minutes(30))
-      assert.equal(Number(await CoTraderConfig.MAX_DW_INTERVAL()), duration.hours(2))
-
-      assert.equal(Number(await CoTraderConfig.MIN_MAX_TOKENS()), 20)
-      assert.equal(Number(await CoTraderConfig.MAX_MAX_TOKENS()), 40)
-    })
-
     it('Correct init pool portal', async function() {
       const DAIUNIBNTAddress = await poolPortal.DAIUNIPoolToken()
       const DAIBNTBNTAddress = await poolPortal.DAIBNTPoolToken()
@@ -1766,24 +1755,6 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       await smartFundETH.updateFundValueFromOracle(LINK.address, toWei(String(1)), {from: sender})
     }
 
-    it('Owner can update correct Trade freeze time', async function() {
-       await smartFundETH.set_TRADE_FREEZE_TIME(duration.minutes(10))
-    })
-
-    it('Owner can update Deposit/Withdraw freeze time', async function() {
-       await smartFundETH.set_DW_FREEZE_TIME(duration.minutes(40))
-    })
-
-    it('Not Owner can Not update correct Trade freeze time', async function() {
-       await smartFundETH.set_TRADE_FREEZE_TIME(duration.minutes(40), { from:userTwo })
-       .should.be.rejectedWith(EVMRevert)
-    })
-
-    it('Not Owner can Not update Deposit/Withdraw freeze time', async function() {
-       await smartFundETH.set_DW_FREEZE_TIME(duration.minutes(10), { from:userTwo })
-       .should.be.rejectedWith(EVMRevert)
-    })
-
     it('Next user cant deposit if prev user open deposi procedure, but can if prev user not used his time', async function() {
       // first deposit (total shares 0) not require Oracle call
       await smartFundETH.deposit({ from: userOne, value: 100 })
@@ -1846,25 +1817,6 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       assert.equal(await smartFundETH.fundValueOracle(), Oracle.address)
     })
 
-    it('Fund manager can set new max tokens ', async function() {
-      assert.equal(await smartFundETH.MAX_TOKENS(), 20)
-      // should be rejected (not corerct amount)
-      await smartFundETH.set_MAX_TOKENS(await CoTraderConfig.MIN_MAX_TOKENS() - 1)
-      .should.be.rejectedWith(EVMRevert)
-
-      await smartFundETH.set_MAX_TOKENS(await CoTraderConfig.MAX_MAX_TOKENS() + 1)
-      .should.be.rejectedWith(EVMRevert)
-
-      // success
-      await smartFundETH.set_MAX_TOKENS(25)
-      assert.equal(await smartFundETH.MAX_TOKENS(), 25)
-    })
-
-    it('Not Fund manager can NOT set new max tokens ', async function() {
-      await smartFundETH.set_MAX_TOKENS(25, { from:userTwo })
-      .should.be.rejectedWith(EVMRevert)
-    })
-
     it('Test deposit after new changed time ', async function() {
       await smartFundETH.deposit({ from: userOne, value: 100 })
       assert.equal(await smartFundETH.totalShares(), toWei(String(1)))
@@ -1873,7 +1825,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       await updateOracle(100, userTwo)
 
       // update time
-      await smartFundETH.set_DW_FREEZE_TIME(duration.minutes(40))
+      await CoTraderConfig.set_DW_FREEZE_TIME(duration.minutes(40))
 
       // revert (time)
       await advanceTimeAndBlock(duration.minutes(31))
@@ -1881,7 +1833,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       await smartFundETH.deposit({ from: userTwo, value: 100 }).should.be.rejectedWith(EVMRevert)
 
       // update time
-      await smartFundETH.set_DW_FREEZE_TIME(duration.minutes(30))
+      await CoTraderConfig.set_DW_FREEZE_TIME(duration.minutes(30))
 
       // success
       await updateOracle(100, userTwo)
@@ -1897,7 +1849,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       await updateOracle(100, userOne)
 
       // update time
-      await smartFundETH.set_DW_FREEZE_TIME(duration.minutes(40))
+      await CoTraderConfig.set_DW_FREEZE_TIME(duration.minutes(40))
 
       // revert (time)
       await advanceTimeAndBlock(duration.minutes(30))
@@ -1905,7 +1857,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       await smartFundETH.withdraw(0, { from: userOne }).should.be.rejectedWith(EVMRevert)
 
       // update time
-      await smartFundETH.set_DW_FREEZE_TIME(duration.minutes(30))
+      await CoTraderConfig.set_DW_FREEZE_TIME(duration.minutes(30))
 
       // success
       await updateOracle(100, userOne)
@@ -1946,7 +1898,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
        assert.equal(await yyyERC.balanceOf(smartFundETH.address), 0)
 
        // reduce time from 5 to 3 minutes
-       await smartFundETH.set_TRADE_FREEZE_TIME(duration.minutes(3))
+       await CoTraderConfig.set_TRADE_FREEZE_TIME(duration.minutes(3))
 
        await smartFundETH.trade(
           ETH_TOKEN_ADDRESS,
@@ -2009,7 +1961,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       should.be.rejectedWith(EVMRevert)
 
       // reduce time from 5 to 3 minutes
-      await smartFundETH.set_TRADE_FREEZE_TIME(duration.minutes(3))
+      await CoTraderConfig.set_TRADE_FREEZE_TIME(duration.minutes(3))
 
       // success
       await smartFundETH.buyPool(toWei(String(2)), 0, ETHBNT.address, connectorsAddress, connectorsAmount, [], "0x")
@@ -2018,7 +1970,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       assert.equal(await ETHBNT.balanceOf(smartFundETH.address), toWei(String(2)))
 
       // return frezze time
-      await smartFundETH.set_TRADE_FREEZE_TIME(duration.minutes(5))
+      await CoTraderConfig.set_TRADE_FREEZE_TIME(duration.minutes(5))
 
       // increase time
       await advanceTimeAndBlock(duration.minutes(31))
@@ -2033,7 +1985,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
       should.be.rejectedWith(EVMRevert)
 
       // update freeze time
-      await smartFundETH.set_TRADE_FREEZE_TIME(duration.minutes(3))
+      await CoTraderConfig.set_TRADE_FREEZE_TIME(duration.minutes(3))
 
       // success
       await smartFundETH.sellPool(toWei(String(2)), 0, ETHBNT.address, [], "0x")
@@ -2096,7 +2048,7 @@ contract('SmartFundETH', function([userOne, userTwo, userThree]) {
 
 
       // reduce time from 5 to 3 minutes
-      await smartFundETH.set_TRADE_FREEZE_TIME(duration.minutes(3))
+      await CoTraderConfig.set_TRADE_FREEZE_TIME(duration.minutes(3))
 
       // success
       await smartFundETH.callDefiPortal(

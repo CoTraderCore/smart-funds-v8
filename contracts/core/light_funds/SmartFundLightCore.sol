@@ -48,9 +48,6 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
   // For ERC20 compliance
   string public name;
 
-  // The maximum amount of tokens that can be traded via the smart fund
-  uint256 public MAX_TOKENS = 20;
-
   // Percentages are rounded to 3 decimal places
   uint256 public TOTAL_PERCENTAGE = 10000;
 
@@ -99,11 +96,6 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
   uint256 public latestOracleCallOnBlock;
   address public latestOracleCaller;
 
-  // time for trade freeze while user do deposit or withdarw
-  uint256 public TRADE_FREEZE_TIME = 5 minutes;
-  // freeze time period between deposit and withdraw
-  uint256 public DW_FREEZE_TIME = 30 minutes;
-
   // CoTrader platform config
   ICoTraderGlobalConfig public cotraderGlobalConfig;
 
@@ -127,7 +119,7 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
   // freeze trade while user do deposit and withdraw
   modifier freezeTradeForDW {
     require(
-        now >= latestOracleCallOnTime + TRADE_FREEZE_TIME,
+        now >= latestOracleCallOnTime + cotraderGlobalConfig.TRADE_FREEZE_TIME(),
         "FUND_REQUIRE_TRADE_FREEZE_FOR_UPDATE_PRICE"
      );
     _;
@@ -136,7 +128,7 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
   // not allow call user B (for a freeze minutes) if user A not finished operation
   // allow call any user for a first deposit
   modifier verifyOracleSender {
-    if(totalShares > 0 && latestOracleCallOnTime + TRADE_FREEZE_TIME >= now)
+    if(totalShares > 0 && latestOracleCallOnTime + cotraderGlobalConfig.TRADE_FREEZE_TIME() >= now)
       require(msg.sender == latestOracleCaller, "SENDER_SHOULD_BE_LATEST_ORACLE_CALLER");
     _;
   }
@@ -194,7 +186,7 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
   // _oracleTokenAddress it's fee token address
   function updateFundValueFromOracle(address _oracleTokenAddress, uint256 _oracleFee) public payable {
     // allow call Oracle only after a certain period
-    require(now >= latestOracleCallOnTime + DW_FREEZE_TIME, "NEED WAIT DW FREEZE TIME");
+    require(now >= latestOracleCallOnTime + cotraderGlobalConfig.DW_FREEZE_TIME(), "NEED WAIT DW FREEZE TIME");
 
     // pay for using Oracle with ETH
     if(_oracleTokenAddress == address(ETH_TOKEN_ADDRESS)){
@@ -224,7 +216,7 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
   // return data from Oracle
   function calculateFundValue() public view returns (uint256) {
       // caller can update only in TRADE_FREEZE_TIME
-      if(latestOracleCallOnTime + TRADE_FREEZE_TIME > now){
+      if(latestOracleCallOnTime + cotraderGlobalConfig.TRADE_FREEZE_TIME() > now){
         // return data
         return fundValueOracle.getFundValueByID(latestOracleRequestID);
       }
@@ -420,7 +412,7 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
     uint256 tokenCount = tokenAddresses.length;
 
     // we can't hold more than MAX_TOKENS tokens
-    require(tokenCount <= MAX_TOKENS, "MAX_TOKENS");
+    require(tokenCount <= cotraderGlobalConfig.MAX_TOKENS(), "MAX_TOKENS");
   }
 
   /**
@@ -582,47 +574,6 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
     require(permittedAddresses.isMatchTypes(_newOracle, 5), "WRONG_ADDRESS");
     // Set new
     fundValueOracle = IFundValueOracle(_newOracle);
-  }
-
-
-  /**
-  * @dev Allows the fund manager set new time for freeze trades
-  *
-  * @param _newTime   Minutes in unix time representation
-  */
-  function set_TRADE_FREEZE_TIME(uint256 _newTime) public onlyOwner {
-    // Require correct time
-    require(_newTime >= cotraderGlobalConfig.MIN_TRADE_FREEZE(), "TIME LESS THAN MIN");
-    require(_newTime <= cotraderGlobalConfig.MAX_TRADE_FREEZE(),"TIME MORE THAN MAX");
-    // Update
-    TRADE_FREEZE_TIME = _newTime;
-  }
-
-
-  /**
-  * @dev Allows the fund manager set new time for open next deposit and withdraw interval
-  *
-  * @param _newTime   Minutes in unix time representation
-  */
-  function set_DW_FREEZE_TIME(uint256 _newTime) public onlyOwner {
-    // Require corerct time
-    require(_newTime >= cotraderGlobalConfig.MIN_DW_INTERVAL(), "TIME LESS THAN MIN");
-    require(_newTime <= cotraderGlobalConfig.MAX_DW_INTERVAL(), "TIME MORE THAN MAX");
-    // Update
-    DW_FREEZE_TIME = _newTime;
-  }
-
-
-  /**
-  * @dev Allows the fund manager set new max trade tokens
-  *
-  * @param _newMaxTokens   Tokens amount
-  */
-  function set_MAX_TOKENS(uint256 _newMaxTokens) public onlyOwner {
-    // Require correct amount
-    require(_newMaxTokens >= cotraderGlobalConfig.MIN_MAX_TOKENS(), "TOKENS LESS THAN MIN");
-    require(_newMaxTokens <= cotraderGlobalConfig.MAX_MAX_TOKENS(),"TOKENS MORE THAN MAX");
-    MAX_TOKENS = _newMaxTokens;
   }
 
 
