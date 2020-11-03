@@ -309,6 +309,11 @@ contract('SmartFundRegistry', function([userOne, userTwo, userThree]) {
       assert.equal(testAddress, await this.registry.smartFundERC20LightFactory())
     })
 
+    it('Owner should be able set New Oracle', async function() {
+      await this.registry.setNewOracle(testAddress)
+      assert.equal(testAddress, await this.registry.oracleAddress())
+    })
+
     it('NOT Owner should NOT be able change exchange portal address', async function() {
       await this.permittedAddresses.addNewAddress(testAddress, 1)
       await this.registry.setExchangePortalAddress(testAddress, { from:userTwo })
@@ -355,6 +360,11 @@ contract('SmartFundRegistry', function([userOne, userTwo, userThree]) {
 
     it('NOT Owner should NOT be able change ERC20 Factory Light', async function() {
       await this.registry.setNewSmartFundERC20LightFactory(testAddress, { from:userTwo })
+      .should.be.rejectedWith(EVMRevert)
+    })
+
+    it('NOT Owner should NOT be able set New Oracle', async function() {
+      await this.registry.setNewOracle(testAddress, { from:userTwo })
       .should.be.rejectedWith(EVMRevert)
     })
   })
