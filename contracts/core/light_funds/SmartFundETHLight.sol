@@ -51,7 +51,8 @@ contract SmartFundETHLight is SmartFundLightCore {
   *
   * @return The amount of shares allocated to the depositor
   */
-  function deposit() external verifyOracleSender payable returns (uint256) {
+  function deposit() external payable returns (uint256) {
+    verifyDWSender();
     // Check if the sender is allowed to deposit into the fund
     if (onlyWhitelist)
       require(whitelist[msg.sender]);
@@ -61,7 +62,7 @@ contract SmartFundETHLight is SmartFundLightCore {
 
     // Calculate number of shares
     uint256 shares = calculateDepositToShares(msg.value);
-    
+
     // reset latest Oracle Caller for protect from double call
     latestOracleCaller = address(0);
 

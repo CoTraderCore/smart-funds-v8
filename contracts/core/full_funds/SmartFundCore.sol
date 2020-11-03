@@ -147,23 +147,6 @@ abstract contract SmartFundCore is Ownable, IERC20 {
   event SmartFundCreated(address indexed owner);
   event OracleUpdate(address caller, uint256 triggerTime, bytes32 id);
 
-  // freeze trade while user do deposit and withdraw
-  modifier freezeTradeForDW {
-    require(
-        now >= latestOracleCallOnTime + cotraderGlobalConfig.TRADE_FREEZE_TIME(),
-        "FREEZE_FOR_UPDATE_PRICE"
-     );
-    _;
-  }
-
-  // not allow call user B (for a freeze minutes) if user A not finished operation
-  // allow call any user for a first deposit
-  modifier verifyOracleSender {
-    if(totalShares > 0 && latestOracleCallOnTime + cotraderGlobalConfig.TRADE_FREEZE_TIME() >= now)
-      require(msg.sender == latestOracleCaller, "NOT_LATEST_ORACLE_CALLER");
-    _;
-  }
-
 
   constructor(
     address _owner,
@@ -215,6 +198,24 @@ abstract contract SmartFundCore is Ownable, IERC20 {
     cotraderGlobalConfig = ICoTraderGlobalConfig(_cotraderGlobalConfig);
 
     emit SmartFundCreated(owner());
+  }
+
+  // Modifiers
+  // We use function instead modifiers because modifiers require more bytes
+
+  // Not allow trade while user do deposit or withdraw
+  function verifyTradeBetweenDW() internal view {
+    require(
+        now >= latestOracleCallOnTime + cotraderGlobalConfig.TRADE_FREEZE_TIME(),
+        "FREEZE_FOR_UPDATE_PRICE"
+     );
+  }
+
+  // not allow call user B (for a freeze minutes) if user A not finished operation
+  // allow call any user for a first deposit
+  function verifyDWSender() internal view {
+    if(totalShares > 0 && latestOracleCallOnTime + cotraderGlobalConfig.TRADE_FREEZE_TIME() >= now)
+      require(msg.sender == latestOracleCaller, "NOT_LATEST_ORACLE_CALLER");
   }
 
   // allow update oracle price
@@ -309,7 +310,8 @@ abstract contract SmartFundCore is Ownable, IERC20 {
   *
   * @param _percentageWithdraw    The percentage of the users shares to withdraw.
   */
-  function withdraw(uint256 _percentageWithdraw) external verifyOracleSender {
+  function withdraw(uint256 _percentageWithdraw) external {
+    verifyDWSender();
     require(totalShares != 0, "EMPTY_SHARES");
     require(_percentageWithdraw <= TOTAL_PERCENTAGE, "WRONG_PERCENT");
 
@@ -380,8 +382,9 @@ abstract contract SmartFundCore is Ownable, IERC20 {
   )
    external
    onlyOwner
-   freezeTradeForDW
   {
+    verifyTradeBetweenDW();
+
     require(_minReturn > 0, "MIN_RETURN_0");
 
     uint256 receivedAmount;
@@ -451,8 +454,8 @@ abstract contract SmartFundCore is Ownable, IERC20 {
   )
    external
    onlyOwner
-   freezeTradeForDW
   {
+   verifyTradeBetweenDW();
    // for determine the exact number of received pool
    uint256 poolAmountReceive;
 
@@ -526,8 +529,8 @@ abstract contract SmartFundCore is Ownable, IERC20 {
   )
    external
    onlyOwner
-   freezeTradeForDW
   {
+    verifyTradeBetweenDW();
     // approve pool
     _poolToken.approve(address(poolPortal), _amount);
 
@@ -572,8 +575,8 @@ abstract contract SmartFundCore is Ownable, IERC20 {
   )
     external
     onlyOwner
-    freezeTradeForDW
   {
+    verifyTradeBetweenDW();
     // event data
     string memory eventType;
     address[] memory tokensToReceive;
@@ -755,7 +758,8 @@ abstract contract SmartFundCore is Ownable, IERC20 {
   /**
   * @dev Allows the fund manager to withdraw their cut of the funds profit
   */
-  function fundManagerWithdraw() external verifyOracleSender onlyOwner {
+  function fundManagerWithdraw() external onlyOwner {
+    verifyDWSender();
     uint256 fundManagerCut;
     uint256 fundValue;
 

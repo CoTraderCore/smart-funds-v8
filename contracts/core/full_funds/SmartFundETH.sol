@@ -57,7 +57,9 @@ contract SmartFundETH is SmartFundCore {
   *
   * @return The amount of shares allocated to the depositor
   */
-  function deposit() external verifyOracleSender payable returns (uint256) {
+  function deposit() external payable returns (uint256) {
+    verifyDWSender();
+
     // Check if the sender is allowed to deposit into the fund
     if (onlyWhitelist)
       require(whitelist[msg.sender]);
