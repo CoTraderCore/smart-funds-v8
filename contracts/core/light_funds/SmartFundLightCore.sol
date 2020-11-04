@@ -192,7 +192,7 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
     if(_oracleTokenAddress == address(ETH_TOKEN_ADDRESS)){
       require(msg.value == _oracleFee, "REQUIRE_ETH");
       // call oracle
-      latestOracleRequestID = fundValueOracle.requestValue.value(_oracleFee)(address(this));
+      latestOracleRequestID = fundValueOracle.requestValue.value(_oracleFee)(address(this), _oracleFee);
     }
     // pay for using Oracle with ERC20
     else{
@@ -200,7 +200,7 @@ abstract contract SmartFundLightCore is Ownable, IERC20 {
       // transfer oracle token from sender and approve to oracle portal
       _transferFromSenderAndApproveTo(IERC20(_oracleTokenAddress), _oracleFee, address(fundValueOracle));
       // call oracle
-      latestOracleRequestID = fundValueOracle.requestValue(address(this));
+      latestOracleRequestID = fundValueOracle.requestValue(address(this), _oracleFee);
     }
 
     // update data

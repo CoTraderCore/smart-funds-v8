@@ -5,25 +5,22 @@ import "../../contracts/zeppelin-solidity/contracts/token/ERC20/IERC20.sol";
 // Mock Oracle
 contract FundValueOracle {
   uint256 public value;
-
-  uint256 public fee;
   address public chainLinkAddress;
 
   // Mapping of requestId => FundValue
   mapping (bytes32 => uint256) public getFundValueByID;
 
-  constructor(uint256 _fee, address _chainLinkAddress)public {
-    fee = _fee;
+  constructor(address _chainLinkAddress) public {
     chainLinkAddress = _chainLinkAddress;
   }
 
-  function requestValue(address _fundAddress) public returns (bytes32 requestId)
+  function requestValue(address _fundAddress, uint256 _fee) public returns (bytes32 requestId)
   {
      // transfer link commision from sender
      require(IERC20(chainLinkAddress).transferFrom(
        msg.sender,
        address(this),
-       fee
+       _fee
       ));
 
       requestId = bytes32(uint256(1));

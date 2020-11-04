@@ -161,7 +161,6 @@ contract('smartFundERC20', function([userOne, userTwo, userThree]) {
     )
 
     Oracle = await FundValueOracle.new(
-      toWei(String(1)),
       LINK.address
     )
 

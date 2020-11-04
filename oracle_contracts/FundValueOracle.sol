@@ -8,7 +8,6 @@ import "https://github.com/OpenZeppelin/openzeppelin-contracts/blob/master/contr
 contract FundValueOracle is ChainlinkClient, Ownable {
     string public apiPath;
     bytes32[] public requestIdArrays;
-    uint256 public fee;
     address public chainLinkAddress;
 
     address public oracle;
@@ -21,27 +20,25 @@ contract FundValueOracle is ChainlinkClient, Ownable {
        RINKEBY
        oracle = address(0x7AFe1118Ea78C1eae84ca8feE5C65Bc76CcF879e);
        jobId = "6d1bfe27e7034b1d87b5270556b17277";
-       fee = 1 * 10 ** 18; // 1 LINK
        chainLinkAddress = address(0x01BE23585060835E02B77ef475b0Cc51aA1e0709);
     */
-    constructor(address _oracle, bytes32 _jobId, uint256 _fee, address _chainLinkAddress) public {
+    constructor(address _oracle, bytes32 _jobId, address _chainLinkAddress) public {
         setPublicChainlinkToken();
         oracle = _oracle;
         jobId = _jobId;
-        fee = _fee;
         chainLinkAddress = _chainLinkAddress;
     }
 
     /**
      * Create a Chainlink request to retrieve API response, find the target
      */
-    function requestValue(address _fundAddress) public returns (bytes32 requestId)
+    function requestValue(address _fundAddress, uint256 _fee) public returns (bytes32 requestId)
     {
        // transfer link commision from sender
        IERC20(chainLinkAddress).transferFrom(
          msg.sender,
          address(this),
-         fee
+         _fee
         );
 
         Chainlink.Request memory request = buildChainlinkRequest(jobId, address(this), this.fulfill.selector);
@@ -53,7 +50,7 @@ contract FundValueOracle is ChainlinkClient, Ownable {
         request.add("path", "result");
 
         // Sends the request
-        return sendChainlinkRequestTo(oracle, request, fee);
+        return sendChainlinkRequestTo(oracle, request, _fee);
     }
 
 
@@ -75,11 +72,6 @@ contract FundValueOracle is ChainlinkClient, Ownable {
     // owner can update api endpoint
     function updateApiPath(string calldata _apiPath) external onlyOwner {
       apiPath = _apiPath;
-    }
-
-    // owner can update fee
-    function updateFee(uint256 _fee) external onlyOwner {
-      fee = _fee;
     }
 
     // owner can update jobId
