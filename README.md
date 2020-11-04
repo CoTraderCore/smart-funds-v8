@@ -35,6 +35,12 @@ ETH Light factory
 ERC20 Light factory
 ```
 
+```
+Deploy Notes
+
+1) don't forget set api endpoint in fund value Oracle 
+```
+
 
 ```
 DEV Notes
