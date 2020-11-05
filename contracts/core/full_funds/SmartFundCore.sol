@@ -214,8 +214,14 @@ abstract contract SmartFundCore is Ownable, IERC20 {
   // not allow call user B (for a freeze minutes) if user A not finished operation
   // allow call any user for a first deposit
   function verifyDWSender() internal view {
-    if(totalShares > 0 && latestOracleCallOnTime + cotraderGlobalConfig.TRADE_FREEZE_TIME() >= now)
-      require(msg.sender == latestOracleCaller, "NOT_LATEST_ORACLE_CALLER");
+    if(totalShares > 0){
+      if(latestOracleCallOnTime + cotraderGlobalConfig.TRADE_FREEZE_TIME() >= now){
+        require(msg.sender == latestOracleCaller, "NOT_LATEST_ORACLE_CALLER");
+      }
+      else{
+        revert("TIME_EXPIRED");
+      }
+    }
   }
 
   // allow update oracle price
@@ -251,14 +257,8 @@ abstract contract SmartFundCore is Ownable, IERC20 {
   // core function for calculate deposit and withdraw and managerWithdraw
   // return data from Oracle
   function calculateFundValue() public view returns (uint256) {
-      // caller can update only in TRADE_FREEZE_TIME
-      if(latestOracleCallOnTime + cotraderGlobalConfig.TRADE_FREEZE_TIME() > now){
-        // return data
-        return fundValueOracle.getFundValueByID(latestOracleRequestID);
-      }
-      else{
-        revert("TIME_EXPIRED");
-      }
+    // return latest data from Oracle
+    return fundValueOracle.getFundValueByID(latestOracleRequestID);
   }
 
 
