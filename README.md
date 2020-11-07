@@ -1,11 +1,9 @@
 # smart-funds-v8
 
 ```
-TODO
-1) Get best price from Oracle for fund value
-2) Freeze for 2-3 minutes deposit, trade, withdraw until user do deposit or withdraw
-3) Allow do new deposit or withdraw request after each new 10 blocks
-4) Change Oracle portal
+Updates
+
+Calculate fund value via Oracle for take nto account CEXs prices, not on;y DEXs.
 ```
 
 
@@ -49,12 +47,19 @@ ERC20 Light factory
 0x3ffa0CbFEf7E3a0112CCf7333193ac849248F375
 
 https://etherscan.io/tx/0x065c6a695f93c11c2a81db420c3f65a465bb5220f682c57e0ab47422878d0d83
+
+
+CoTrader Global Config
+
+
+https://etherscan.io/tx/0xb0d6b7dc5800ab01f9140e2c6c78a92ff0984739662c30422436a6d5c7792e84
 ```
 
 ```
 Deploy Notes
 
-1) don't forget set api endpoint in fund value Oracle
+1) Don't forget set api endpoint in fund value Oracle contract
+2) Fund value Oracle contract is number 5 in permitted address 
 ```
 
 
