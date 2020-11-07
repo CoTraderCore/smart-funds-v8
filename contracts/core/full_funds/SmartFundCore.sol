@@ -219,7 +219,7 @@ abstract contract SmartFundCore is Ownable, IERC20 {
         require(msg.sender == latestOracleCaller, "NOT_LATEST_ORACLE_CALLER");
       }
       else{
-        revert("TIME_EXPIRED");
+        revert("ORACLE_TIME_EXPIRED");
       }
     }
   }
