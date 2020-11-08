@@ -51,15 +51,25 @@ https://etherscan.io/tx/0x065c6a695f93c11c2a81db420c3f65a465bb5220f682c57e0ab474
 
 CoTrader Global Config
 
+0x9c990064EC31a531752adD55283B560Fb191dE2B
 
 https://etherscan.io/tx/0xb0d6b7dc5800ab01f9140e2c6c78a92ff0984739662c30422436a6d5c7792e84
+
+
+Oracle
+
+0x3ebe7aaa7192a582a0ba1cdd5c3d9cfb73055f7c
+
+https://etherscan.io/tx/0xf1a94d7f854c6adbdade124204e13928be3b585f466a51a1f2af8556a6811360
+
+
 ```
 
 ```
 Deploy Notes
 
 1) Don't forget set api endpoint in fund value Oracle contract
-2) Fund value Oracle contract is number 5 in permitted address 
+2) Fund value Oracle contract is number 5 in permitted address
 ```
 
 

@@ -16,12 +16,8 @@ contract FundValueOracle is ChainlinkClient, Ownable {
     // Mapping of requestId => FundValue
     mapping (bytes32 => uint256) public getFundValueByID;
 
-    /**
-       RINKEBY
-       oracle = address(0x7AFe1118Ea78C1eae84ca8feE5C65Bc76CcF879e);
-       jobId = "6d1bfe27e7034b1d87b5270556b17277";
-       chainLinkAddress = address(0x01BE23585060835E02B77ef475b0Cc51aA1e0709);
-    */
+
+
     constructor(address _oracle, bytes32 _jobId, address _chainLinkAddress) public {
         setPublicChainlinkToken();
         oracle = _oracle;
@@ -65,7 +61,6 @@ contract FundValueOracle is ChainlinkClient, Ownable {
     function fulfill(bytes32 _requestId, uint256 _result) public recordChainlinkFulfillment(_requestId)
     {
       getFundValueByID[_requestId] = _result;
-      // for test
       requestIdArrays.push(_requestId);
     }
 
