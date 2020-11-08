@@ -63,6 +63,13 @@ Oracle
 https://etherscan.io/tx/0xf1a94d7f854c6adbdade124204e13928be3b585f466a51a1f2af8556a6811360
 
 
+Smart funds Registry
+
+0x71A4e124dd95f917AAe3E27f9EA2D0516EE1826F
+
+https://etherscan.io/tx/0x51d53f373a55f681501e3d430afdbe86a50084dd4ab100fc3f5ea482ce1a82af
+
+
 ```
 
 ```
